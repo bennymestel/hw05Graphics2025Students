@@ -31,6 +31,60 @@ scene.add(directionalLight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
+// Enhanced lighting setup with multiple light sources
+// Point light at center court
+const centerPointLight = new THREE.PointLight(0xffffff, 0.4, 25);
+centerPointLight.position.set(0, 10, 0);
+centerPointLight.castShadow = true;
+centerPointLight.shadow.mapSize.width = 512;
+centerPointLight.shadow.mapSize.height = 512;
+scene.add(centerPointLight);
+
+// Spot lights above each hoop
+const leftSpotLight = new THREE.SpotLight(0xffffff, 0.6, 20, Math.PI / 3, 0.3, 1);
+leftSpotLight.position.set(-15, 12, 0);
+leftSpotLight.target.position.set(-15, 0, 0);
+leftSpotLight.castShadow = true;
+leftSpotLight.shadow.mapSize.width = 512;
+leftSpotLight.shadow.mapSize.height = 512;
+scene.add(leftSpotLight);
+scene.add(leftSpotLight.target);
+
+const rightSpotLight = new THREE.SpotLight(0xffffff, 0.6, 20, Math.PI / 3, 0.3, 1);
+rightSpotLight.position.set(15, 12, 0);
+rightSpotLight.target.position.set(15, 0, 0);
+rightSpotLight.castShadow = true;
+rightSpotLight.shadow.mapSize.width = 512;
+rightSpotLight.shadow.mapSize.height = 512;
+scene.add(rightSpotLight);
+scene.add(rightSpotLight.target);
+
+// Additional point lights for corners
+const cornerLight1 = new THREE.PointLight(0xffffff, 0.3, 15);
+cornerLight1.position.set(-12, 8, -6);
+cornerLight1.castShadow = true;
+scene.add(cornerLight1);
+
+const cornerLight2 = new THREE.PointLight(0xffffff, 0.3, 15);
+cornerLight2.position.set(12, 8, -6);
+cornerLight2.castShadow = true;
+scene.add(cornerLight2);
+
+const cornerLight3 = new THREE.PointLight(0xffffff, 0.3, 15);
+cornerLight3.position.set(-12, 8, 6);
+cornerLight3.castShadow = true;
+scene.add(cornerLight3);
+
+const cornerLight4 = new THREE.PointLight(0xffffff, 0.3, 15);
+cornerLight4.position.set(12, 8, 6);
+cornerLight4.castShadow = true;
+scene.add(cornerLight4);
+
+// Warm fill light for atmosphere
+const warmFillLight = new THREE.DirectionalLight(0xfff4e6, 0.2);
+warmFillLight.position.set(0, 15, 10);
+scene.add(warmFillLight);
+
 function degrees_to_radians(degrees) {
   return degrees * (Math.PI / 180);
 }
@@ -45,7 +99,7 @@ function createBasketballCourt() {
   court.position.y = 0;
   court.receiveShadow = true;
   scene.add(court);
-
+  
   const centerLineGeometry = new THREE.BufferGeometry();
   const centerLineVertices = new Float32Array([
     -courtWidth / 2, 0, 0,
@@ -253,7 +307,7 @@ function createSecondBasketballHoop() {
   const supportArmGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.3, 8);
   const supportArmMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 }); // Dark gray
   const supportArm = new THREE.Mesh(supportArmGeometry, supportArmMaterial);
-  supportArm.position.set(15.15, 7.7, 0); // Position lower at top of pole height
+  supportArm.position.set(15.15, 7.85, 0); // Position at top of pole height
   supportArm.rotation.z = -Math.PI / 2; // Rotate to connect pole to backboard
   supportArm.castShadow = true;
   scene.add(supportArm);
@@ -353,10 +407,87 @@ function createBasketball() {
   }
 }
 
+// Create scoreboard and bleachers for atmosphere
+function createAtmosphere() {
+  // Scoreboard
+  const scoreboardGeometry = new THREE.BoxGeometry(8, 4, 1);
+  const scoreboardMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
+  const scoreboard = new THREE.Mesh(scoreboardGeometry, scoreboardMaterial);
+  scoreboard.position.set(0, 12, -12);
+  scoreboard.castShadow = true;
+  scoreboard.receiveShadow = true;
+  scene.add(scoreboard);
+
+  // Scoreboard screen
+  const screenGeometry = new THREE.PlaneGeometry(6, 2.5);
+  const screenMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Green LED look
+  const screen = new THREE.Mesh(screenGeometry, screenMaterial);
+  screen.position.set(0, 12, -11.6);
+  scene.add(screen);
+
+  // Bleachers - left side
+  for (let row = 0; row < 5; row++) {
+    const bleacherGeometry = new THREE.BoxGeometry(20, 0.5, 2);
+    const bleacherMaterial = new THREE.MeshPhongMaterial({ color: 0x666666 });
+    const bleacher = new THREE.Mesh(bleacherGeometry, bleacherMaterial);
+    bleacher.position.set(0, row * 1.5, -10 - row * 2);
+    bleacher.castShadow = true;
+    bleacher.receiveShadow = true;
+    scene.add(bleacher);
+  }
+
+  // Bleachers - right side (behind scoreboard)
+  for (let row = 0; row < 3; row++) {
+    const bleacherGeometry = new THREE.BoxGeometry(20, 0.5, 2);
+    const bleacherMaterial = new THREE.MeshPhongMaterial({ color: 0x666666 });
+    const bleacher = new THREE.Mesh(bleacherGeometry, bleacherMaterial);
+    bleacher.position.set(0, row * 1.5, -20 - row * 2);
+    bleacher.castShadow = true;
+    bleacher.receiveShadow = true;
+    scene.add(bleacher);
+  }
+
+  // Bleachers - front side (opposite scoreboard)
+  for (let row = 0; row < 4; row++) {
+    const bleacherGeometry = new THREE.BoxGeometry(20, 0.5, 2);
+    const bleacherMaterial = new THREE.MeshPhongMaterial({ color: 0x666666 });
+    const bleacher = new THREE.Mesh(bleacherGeometry, bleacherMaterial);
+    bleacher.position.set(0, row * 1.5, 10 + row * 2);
+    bleacher.castShadow = true;
+    bleacher.receiveShadow = true;
+    scene.add(bleacher);
+  }
+
+  // Bleachers - left side of court
+  for (let row = 0; row < 3; row++) {
+    const bleacherGeometry = new THREE.BoxGeometry(8, 0.5, 2);
+    const bleacherMaterial = new THREE.MeshPhongMaterial({ color: 0x666666 });
+    const bleacher = new THREE.Mesh(bleacherGeometry, bleacherMaterial);
+    bleacher.position.set(-20 - row * 1.5, row * 1.5, row * 1.5); // Higher rows further from court
+    bleacher.rotation.y = Math.PI / 2; // Rotate to face the court
+    bleacher.castShadow = true;
+    bleacher.receiveShadow = true;
+    scene.add(bleacher);
+  }
+
+  // Bleachers - right side of court
+  for (let row = 0; row < 3; row++) {
+    const bleacherGeometry = new THREE.BoxGeometry(8, 0.5, 2);
+    const bleacherMaterial = new THREE.MeshPhongMaterial({ color: 0x666666 });
+    const bleacher = new THREE.Mesh(bleacherGeometry, bleacherMaterial);
+    bleacher.position.set(20 + row * 1.5, row * 1.5, row * 1.5); // Higher rows further from court
+    bleacher.rotation.y = -Math.PI / 2; // Rotate to face the court
+    bleacher.castShadow = true;
+    bleacher.receiveShadow = true;
+    scene.add(bleacher);
+  }
+}
+
 createBasketballCourt();
 createBasketballHoop();
 createSecondBasketballHoop();
 createBasketball();
+createAtmosphere();
 
 // Set camera position to show the whole court
 camera.position.set(0, 20, 25);
