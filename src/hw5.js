@@ -137,9 +137,9 @@ function createBasketballCourt() {
   scene.add(threePointArc2);
 }
 
-// Create basketball hoop
+// Create the first basketball hoop (left side of court)
 function createBasketballHoop() {
-  // Backboard - white semi-transparent rectangular
+  // Backboard - white semi-transparent rectangular surface
   const backboardGeometry = new THREE.BoxGeometry(4, 3, 0.1);
   const backboardMaterial = new THREE.MeshPhongMaterial({ 
     color: 0xffffff, 
@@ -148,26 +148,26 @@ function createBasketballHoop() {
   });
   const backboard = new THREE.Mesh(backboardGeometry, backboardMaterial);
   backboard.position.set(-15, 8, 0); // Position at left side of court
-  backboard.rotation.y = Math.PI / 2; // Rotate 90 degrees to align with court width
+  backboard.rotation.y = Math.PI / 2; // Rotate to face the court
   backboard.castShadow = true;
   backboard.receiveShadow = true;
   scene.add(backboard);
 
-  // Orange rim (torus)
+  // Orange rim (torus) for the basketball hoop
   const rimGeometry = new THREE.TorusGeometry(0.9, 0.1, 8, 16);
   const rimMaterial = new THREE.MeshPhongMaterial({ color: 0xff8c00 }); // Orange color
   const rim = new THREE.Mesh(rimGeometry, rimMaterial);
-  rim.position.set(-14.1, 6.8, 0); // Slightly lower position on the backboard
+  rim.position.set(-14.1, 6.8, 0); // Position in front of backboard
   rim.rotation.x = Math.PI / 2; // Rotate to make rim horizontal
   rim.castShadow = true;
   scene.add(rim);
 
-  // Net - made from line segments
-  const netSegments = 12; // More than 8 as requested
-  const netHeight = 1.5;
-  const netRadius = 0.9;
+  // Basketball net - made from line segments
+  const netSegments = 12; // Number of vertical lines in the net
+  const netHeight = 1.5;  // Height of the net
+  const netRadius = 0.9;  // Radius of the net (matches rim)
   
-  // Vertical lines of the net
+  // Create vertical lines of the net
   for (let i = 0; i < netSegments; i++) {
     const angle = (i / netSegments) * 2 * Math.PI;
     const x = Math.cos(angle) * netRadius;
@@ -175,21 +175,21 @@ function createBasketballHoop() {
     
     const netLineGeometry = new THREE.BufferGeometry();
     const netLineVertices = new Float32Array([
-      x, 0, z,
-      x, -netHeight, z
+      x, 0, z,           // Top of net line
+      x, -netHeight, z   // Bottom of net line
     ]);
     netLineGeometry.setAttribute('position', new THREE.BufferAttribute(netLineVertices, 3));
     
     const netLineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
     const netLine = new THREE.Line(netLineGeometry, netLineMaterial);
-    netLine.position.set(-14.1, 6.8, 0);
+    netLine.position.set(-14.1, 6.8, 0); // Position at rim
     scene.add(netLine);
   }
   
-  // Horizontal rings of the net
+  // Create horizontal rings of the net
   for (let ring = 1; ring <= 4; ring++) {
-    const ringHeight = -(ring * netHeight / 5);
-    const ringRadius = netRadius * (1 - ring / 5);
+    const ringHeight = -(ring * netHeight / 5); // Staggered heights
+    const ringRadius = netRadius * (1 - ring / 5); // Decreasing radius for cone shape
     
     const ringGeometry = new THREE.BufferGeometry();
     const ringPoints = [];
@@ -203,7 +203,7 @@ function createBasketballHoop() {
     
     const ringMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
     const ringLine = new THREE.Line(ringGeometry, ringMaterial);
-    ringLine.position.set(-14.1, 6.8, 0);
+    ringLine.position.set(-14.1, 6.8, 0); // Position at rim
     scene.add(ringLine);
   }
 
@@ -211,7 +211,7 @@ function createBasketballHoop() {
   const poleGeometry = new THREE.CylinderGeometry(0.2, 0.2, 8, 8);
   const poleMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 }); // Dark gray
   const pole = new THREE.Mesh(poleGeometry, poleMaterial);
-  pole.position.set(-15.3, 4, 0); // Closer to the backboard
+  pole.position.set(-15.3, 4, 0); // Behind the backboard
   pole.castShadow = true;
   scene.add(pole);
 
@@ -219,15 +219,15 @@ function createBasketballHoop() {
   const supportArmGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.3, 8);
   const supportArmMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 }); // Dark gray
   const supportArm = new THREE.Mesh(supportArmGeometry, supportArmMaterial);
-  supportArm.position.set(-15.15, 7.7, 0); // Position lower at top of pole height
+  supportArm.position.set(-15.15, 7.7, 0); // Position at top of pole
   supportArm.rotation.z = Math.PI / 2; // Rotate to connect pole to backboard
   supportArm.castShadow = true;
   scene.add(supportArm);
 }
 
-// Create second basketball hoop at opposite end
+// Create the second basketball hoop (right side of court) - mirrored version
 function createSecondBasketballHoop() {
-  // Backboard - white semi-transparent rectangular
+  // Backboard - white semi-transparent rectangular surface (mirrored)
   const backboardGeometry = new THREE.BoxGeometry(4, 3, 0.1);
   const backboardMaterial = new THREE.MeshPhongMaterial({ 
     color: 0xffffff, 
@@ -236,26 +236,26 @@ function createSecondBasketballHoop() {
   });
   const backboard = new THREE.Mesh(backboardGeometry, backboardMaterial);
   backboard.position.set(15, 8, 0); // Position at right side of court
-  backboard.rotation.y = -Math.PI / 2; // Rotate -90 degrees to face the opposite direction
+  backboard.rotation.y = -Math.PI / 2; // Rotate to face the court (opposite direction)
   backboard.castShadow = true;
   backboard.receiveShadow = true;
   scene.add(backboard);
 
-  // Orange rim (torus)
+  // Orange rim (torus) for the basketball hoop (mirrored)
   const rimGeometry = new THREE.TorusGeometry(0.9, 0.1, 8, 16);
   const rimMaterial = new THREE.MeshPhongMaterial({ color: 0xff8c00 }); // Orange color
   const rim = new THREE.Mesh(rimGeometry, rimMaterial);
-  rim.position.set(14.1, 6.8, 0); // Position in front of backboard on right side
+  rim.position.set(14.1, 6.8, 0); // Position in front of backboard (right side)
   rim.rotation.x = Math.PI / 2; // Rotate to make rim horizontal
   rim.castShadow = true;
   scene.add(rim);
 
-  // Net - made from line segments
-  const netSegments = 12;
-  const netHeight = 1.5;
-  const netRadius = 0.9;
+  // Basketball net - made from line segments (mirrored)
+  const netSegments = 12; // Number of vertical lines in the net
+  const netHeight = 1.5;  // Height of the net
+  const netRadius = 0.9;  // Radius of the net (matches rim)
   
-  // Vertical lines of the net
+  // Create vertical lines of the net
   for (let i = 0; i < netSegments; i++) {
     const angle = (i / netSegments) * 2 * Math.PI;
     const x = Math.cos(angle) * netRadius;
@@ -263,21 +263,21 @@ function createSecondBasketballHoop() {
     
     const netLineGeometry = new THREE.BufferGeometry();
     const netLineVertices = new Float32Array([
-      x, 0, z,
-      x, -netHeight, z
+      x, 0, z,           // Top of net line
+      x, -netHeight, z   // Bottom of net line
     ]);
     netLineGeometry.setAttribute('position', new THREE.BufferAttribute(netLineVertices, 3));
     
     const netLineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
     const netLine = new THREE.Line(netLineGeometry, netLineMaterial);
-    netLine.position.set(14.1, 6.8, 0);
+    netLine.position.set(14.1, 6.8, 0); // Position at rim (right side)
     scene.add(netLine);
   }
   
-  // Horizontal rings of the net
+  // Create horizontal rings of the net
   for (let ring = 1; ring <= 4; ring++) {
-    const ringHeight = -(ring * netHeight / 5);
-    const ringRadius = netRadius * (1 - ring / 5);
+    const ringHeight = -(ring * netHeight / 5); // Staggered heights
+    const ringRadius = netRadius * (1 - ring / 5); // Decreasing radius for cone shape
     
     const ringGeometry = new THREE.BufferGeometry();
     const ringPoints = [];
@@ -291,35 +291,35 @@ function createSecondBasketballHoop() {
     
     const ringMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
     const ringLine = new THREE.Line(ringGeometry, ringMaterial);
-    ringLine.position.set(14.1, 6.8, 0);
+    ringLine.position.set(14.1, 6.8, 0); // Position at rim (right side)
     scene.add(ringLine);
   }
 
-  // Support pole behind the backboard
+  // Support pole behind the backboard (mirrored)
   const poleGeometry = new THREE.CylinderGeometry(0.2, 0.2, 8, 8);
   const poleMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 }); // Dark gray
   const pole = new THREE.Mesh(poleGeometry, poleMaterial);
-  pole.position.set(15.3, 4, 0); // Behind the backboard on right side
+  pole.position.set(15.3, 4, 0); // Behind the backboard (right side)
   pole.castShadow = true;
   scene.add(pole);
 
-  // Support arm connecting pole to backboard
+  // Support arm connecting pole to backboard (mirrored)
   const supportArmGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.3, 8);
   const supportArmMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 }); // Dark gray
   const supportArm = new THREE.Mesh(supportArmGeometry, supportArmMaterial);
-  supportArm.position.set(15.15, 7.85, 0); // Position at top of pole height
-  supportArm.rotation.z = -Math.PI / 2; // Rotate to connect pole to backboard
+  supportArm.position.set(15.15, 7.85, 0); // Position at top of pole (right side)
+  supportArm.rotation.z = -Math.PI / 2; // Rotate to connect pole to backboard (opposite direction)
   supportArm.castShadow = true;
   scene.add(supportArm);
 }
 
-// Create basketball at center court
+// Create a realistic basketball at center court
 function createBasketball() {
-  // Basketball sphere
+  // Basketball sphere - orange with realistic material properties
   const basketballGeometry = new THREE.SphereGeometry(0.8, 32, 32);
   const basketballMaterial = new THREE.MeshPhongMaterial({ 
-    color: 0xff8c00,  // Orange color
-    shininess: 30
+    color: 0xff8c00,  // Orange color matching real basketballs
+    shininess: 30     // Moderate shininess for realistic appearance
   });
   const basketball = new THREE.Mesh(basketballGeometry, basketballMaterial);
   basketball.position.set(0, 0.8, 0); // Position at center court, slightly above surface
@@ -328,14 +328,14 @@ function createBasketball() {
   scene.add(basketball);
 
   // Basketball seams - create realistic seam pattern
-  const ballRadius = 0.8;
+  const ballRadius = 0.8; // Radius of the basketball
   
-  // Main vertical seams (longitudinal lines)
+  // Main vertical seams (longitudinal lines) - create curved seams that follow the sphere
   const verticalSeams = 4;
   for (let i = 0; i < verticalSeams; i++) {
     const angle = (i / verticalSeams) * 2 * Math.PI;
     
-    // Create curved seam that follows the sphere
+    // Create curved seam that follows the spherical surface
     const seamPoints = [];
     const segments = 32;
     for (let j = 0; j <= segments; j++) {
@@ -351,14 +351,14 @@ function createBasketball() {
     
     const seamMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 3 });
     const seam = new THREE.Line(seamGeometry, seamMaterial);
-    seam.position.set(0, 0.8, 0);
+    seam.position.set(0, 0.8, 0); // Position at basketball center
     scene.add(seam);
   }
 
   // Horizontal seams (latitudinal lines) - create the classic basketball pattern
-  const horizontalSeamHeights = [-0.4, 0, 0.4]; // Three horizontal seams
+  const horizontalSeamHeights = [-0.4, 0, 0.4]; // Three horizontal seams at different heights
   for (let height of horizontalSeamHeights) {
-    const radius = Math.sqrt(ballRadius * ballRadius - height * height);
+    const radius = Math.sqrt(ballRadius * ballRadius - height * height); // Calculate radius at this height
     
     const horizontalSeamPoints = [];
     const segments = 32;
@@ -374,7 +374,7 @@ function createBasketball() {
     
     const horizontalSeamMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 3 });
     const horizontalSeam = new THREE.Line(horizontalSeamGeometry, horizontalSeamMaterial);
-    horizontalSeam.position.set(0, 0.8, 0);
+    horizontalSeam.position.set(0, 0.8, 0); // Position at basketball center
     scene.add(horizontalSeam);
   }
 
@@ -383,12 +383,12 @@ function createBasketball() {
   for (let i = 0; i < curvedSeams; i++) {
     const angle = (i / curvedSeams) * 2 * Math.PI + Math.PI / 4; // Offset by 45 degrees
     
-    // Create curved seam that goes from one pole to the other with a curve
+    // Create curved seam that goes from one pole to the other with a subtle curve
     const seamPoints = [];
     const segments = 32;
     for (let j = 0; j <= segments; j++) {
       const phi = (j / segments) * Math.PI - Math.PI / 2;
-      const curveOffset = Math.sin(phi * 2) * 0.1; // Add curve to the seam
+      const curveOffset = Math.sin(phi * 2) * 0.1; // Add subtle curve to the seam
       const adjustedAngle = angle + curveOffset;
       
       const x = ballRadius * Math.cos(phi) * Math.cos(adjustedAngle);
@@ -402,7 +402,7 @@ function createBasketball() {
     
     const seamMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 });
     const seam = new THREE.Line(seamGeometry, seamMaterial);
-    seam.position.set(0, 0.8, 0);
+    seam.position.set(0, 0.8, 0); // Position at basketball center
     scene.add(seam);
   }
 }
