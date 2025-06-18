@@ -8,15 +8,28 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 scene.background = new THREE.Color(0x000000);
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-directionalLight.position.set(10, 20, 15);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+directionalLight.position.set(15, 25, 20);
 directionalLight.castShadow = true;
+
+// Configure shadow properties for better quality
+directionalLight.shadow.mapSize.width = 2048;
+directionalLight.shadow.mapSize.height = 2048;
+directionalLight.shadow.camera.near = 0.5;
+directionalLight.shadow.camera.far = 100;
+directionalLight.shadow.camera.left = -20;
+directionalLight.shadow.camera.right = 20;
+directionalLight.shadow.camera.top = 20;
+directionalLight.shadow.camera.bottom = -20;
+
 scene.add(directionalLight);
 
+// Enable shadows with better quality
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 function degrees_to_radians(degrees) {
   return degrees * (Math.PI / 180);
@@ -327,11 +340,20 @@ createBasketballHoop();
 createSecondBasketballHoop();
 createBasketball();
 
-const cameraTranslate = new THREE.Matrix4();
-cameraTranslate.makeTranslation(0, 15, 30);
-camera.applyMatrix4(cameraTranslate);
+// Set camera position to show the whole court
+camera.position.set(0, 20, 25);
+camera.lookAt(0, 0, 0);
 
+// Setup OrbitControls with better configuration
 const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; // Smooth camera movement
+controls.dampingFactor = 0.05;
+controls.screenSpacePanning = false;
+controls.minDistance = 10; // Minimum zoom distance
+controls.maxDistance = 50; // Maximum zoom distance
+controls.maxPolarAngle = Math.PI / 2; // Prevent camera from going below ground
+controls.target.set(0, 5, 0); // Look at center of court, slightly above ground
+
 let isOrbitEnabled = true;
 
 const instructionsElement = document.createElement('div');
@@ -345,12 +367,15 @@ instructionsElement.style.textAlign = 'left';
 instructionsElement.innerHTML = `
   <h3>Controls:</h3>
   <p>O - Toggle orbit camera</p>
+  <p>Mouse - Rotate camera (when enabled)</p>
+  <p>Scroll - Zoom in/out</p>
 `;
 document.body.appendChild(instructionsElement);
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === "o") {
+  if (e.key === "o" || e.key === "O") {
     isOrbitEnabled = !isOrbitEnabled;
+    console.log('Orbit controls:', isOrbitEnabled ? 'enabled' : 'disabled');
   }
 });
 
