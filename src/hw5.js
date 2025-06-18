@@ -28,15 +28,52 @@ function degrees_to_radians(degrees) {
 
 // Create basketball court
 function createBasketballCourt() {
-  // Court floor - just a simple brown surface
-  const courtGeometry = new THREE.BoxGeometry(30, 0.2, 15);
+  // Court floor - using PlaneGeometry with 2:1 ratio
+  const courtWidth = 30;  // Width of the court
+  const courtLength = 15; // Length of the court (2:1 ratio)
+  const courtGeometry = new THREE.PlaneGeometry(courtWidth, courtLength);
   const courtMaterial = new THREE.MeshPhongMaterial({ 
     color: 0xc68642,  // Brown wood color
     shininess: 50
   });
   const court = new THREE.Mesh(courtGeometry, courtMaterial);
+  
+  // Position the court horizontally (rotate to lay flat)
+  court.rotation.x = -Math.PI / 2; // Rotate 90 degrees to make it horizontal
+  court.position.y = 0; // Position at ground level
+  
   court.receiveShadow = true;
   scene.add(court);
+  
+  // Add white center line across the court
+  const centerLineGeometry = new THREE.BufferGeometry();
+  const centerLineVertices = new Float32Array([
+    -courtWidth/2, 0, 0,  // Start point (left side of court)
+    courtWidth/2, 0, 0    // End point (right side of court)
+  ]);
+  centerLineGeometry.setAttribute('position', new THREE.BufferAttribute(centerLineVertices, 3));
+  
+  const centerLineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff }); // White color
+  const centerLine = new THREE.Line(centerLineGeometry, centerLineMaterial);
+  
+  // Position the center line on the court (slightly above to avoid z-fighting)
+  centerLine.position.y = 0.01;
+  
+  scene.add(centerLine);
+  
+  // Add white center circle at center court
+  const centerCircleGeometry = new THREE.RingGeometry(1.5, 2, 32); // Inner radius 1.5, outer radius 2, 32 segments
+  const centerCircleMaterial = new THREE.MeshBasicMaterial({ 
+    color: 0xffffff,  // White color
+    side: THREE.DoubleSide // Render both sides
+  });
+  const centerCircle = new THREE.Mesh(centerCircleGeometry, centerCircleMaterial);
+  
+  // Position the center circle on the court (slightly above to avoid z-fighting)
+  centerCircle.position.y = 0.02;
+  centerCircle.rotation.x = -Math.PI / 2; // Rotate to lay flat like the court
+  
+  scene.add(centerCircle);
   
   // Note: All court lines, hoops, and other elements have been removed
   // Students will need to implement these features
