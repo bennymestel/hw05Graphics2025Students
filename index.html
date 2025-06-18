@@ -5,10 +5,56 @@
 		<title>HW5</title>
 		<style>
 			body { margin: 0; }
+			
+			#score {
+				position: absolute;
+				top: 20px;
+				right: 20px;
+				background-color: rgba(0, 0, 0, 0.8);
+				color: white;
+				padding: 15px;
+				border-radius: 10px;
+				font-family: Arial, sans-serif;
+				font-size: 18px;
+				font-weight: bold;
+				min-width: 150px;
+				text-align: center;
+				border: 2px solid #ff8c00;
+			}
+			
+			#controls {
+				position: absolute;
+				bottom: 20px;
+				right: 20px;
+				background-color: rgba(0, 0, 0, 0.8);
+				color: white;
+				padding: 15px;
+				border-radius: 10px;
+				font-family: Arial, sans-serif;
+				font-size: 14px;
+				min-width: 200px;
+				border: 2px solid #ff8c00;
+			}
+			
+			#controls h3 {
+				margin: 0 0 10px 0;
+				color: #ff8c00;
+			}
+			
+			#controls p {
+				margin: 5px 0;
+			}
 		</style>
 		<script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'></script>
 	</head>
 	<body>
+		<div id="score">Score: 0 - 0</div>
+		<div id="controls">
+			<h3>Controls</h3>
+			<p>O - Toggle orbit camera</p>
+			<p>Mouse - Rotate camera</p>
+			<p>Scroll - Zoom in/out</p>
+		</div>
 		<script src="src/hw5.js" type="module"></script>
 
 	</body>
