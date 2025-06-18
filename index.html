@@ -1,61 +1,72 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<!-- Character encoding for proper text display -->
 		<meta charset="utf-8">
 		<title>HW5</title>
 		<style>
 			body { margin: 0; }
 			
+			/* Score display styling - positioned in top-right corner */
 			#score {
-				position: absolute;
-				top: 20px;
-				right: 20px;
-				background-color: rgba(0, 0, 0, 0.8);
-				color: white;
-				padding: 15px;
-				border-radius: 10px;
-				font-family: Arial, sans-serif;
-				font-size: 18px;
-				font-weight: bold;
-				min-width: 150px;
-				text-align: center;
-				border: 2px solid #ff8c00;
+				position: absolute;          /* Position absolutely for overlay */
+				top: 20px;                   /* Distance from top of screen */
+				right: 20px;                 /* Distance from right edge */
+				background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent black background */
+				color: white;                /* White text for contrast */
+				padding: 15px;               /* Internal spacing */
+				border-radius: 10px;         /* Rounded corners */
+				font-family: Arial, sans-serif; /* Clean, readable font */
+				font-size: 18px;             /* Large, visible text size */
+				font-weight: bold;           /* Bold text for emphasis */
+				min-width: 150px;            /* Minimum width for consistent appearance */
+				text-align: center;          /* Center the score text */
+				border: 2px solid #ff8c00;   /* Orange border matching basketball theme */
 			}
 			
+			/* Controls display styling - positioned in bottom-right corner */
 			#controls {
-				position: absolute;
-				bottom: 20px;
-				right: 20px;
-				background-color: rgba(0, 0, 0, 0.8);
-				color: white;
-				padding: 15px;
-				border-radius: 10px;
-				font-family: Arial, sans-serif;
-				font-size: 14px;
-				min-width: 200px;
-				border: 2px solid #ff8c00;
+				position: absolute;          /* Position absolutely for overlay */
+				bottom: 20px;                /* Distance from bottom of screen */
+				right: 20px;                 /* Distance from right edge */
+				background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent black background */
+				color: white;                /* White text for contrast */
+				padding: 15px;               /* Internal spacing */
+				border-radius: 10px;         /* Rounded corners */
+				font-family: Arial, sans-serif; /* Clean, readable font */
+				font-size: 14px;             /* Appropriate size for instructions */
+				min-width: 200px;            /* Minimum width for control text */
+				border: 2px solid #ff8c00;   /* Orange border matching basketball theme */
 			}
 			
+			/* Controls header styling */
 			#controls h3 {
-				margin: 0 0 10px 0;
-				color: #ff8c00;
+				margin: 0 0 10px 0;         /* Remove top margin, add bottom spacing */
+				color: #ff8c00;              /* Orange color for header */
 			}
 			
+			/* Controls paragraph styling */
 			#controls p {
-				margin: 5px 0;
+				margin: 5px 0;               /* Small vertical spacing between lines */
 			}
 		</style>
+		
+		<!-- Load Three.js library from CDN for 3D graphics -->
 		<script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'></script>
 	</head>
 	<body>
+		<!-- Score display element - shows current game score -->
 		<div id="score">Score: 0 - 0</div>
+		
+		<!-- Controls information panel - displays user interaction instructions -->
 		<div id="controls">
 			<h3>Controls</h3>
 			<p>O - Toggle orbit camera</p>
 			<p>Mouse - Rotate camera</p>
 			<p>Scroll - Zoom in/out</p>
 		</div>
+		
+		<!-- Load the main JavaScript file containing the 3D basketball court -->
 		<script src="src/hw5.js" type="module"></script>
-
 	</body>
 </html>
