@@ -160,6 +160,15 @@ function createBasketballHoop() {
   pole.position.set(-15.3, 4, 0); // Closer to the backboard
   pole.castShadow = true;
   scene.add(pole);
+
+  // Support arm connecting pole to backboard
+  const supportArmGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.3, 8);
+  const supportArmMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 }); // Dark gray
+  const supportArm = new THREE.Mesh(supportArmGeometry, supportArmMaterial);
+  supportArm.position.set(-15.15, 7.7, 0); // Position lower at top of pole height
+  supportArm.rotation.z = Math.PI / 2; // Rotate to connect pole to backboard
+  supportArm.castShadow = true;
+  scene.add(supportArm);
 }
 
 // Create second basketball hoop at opposite end
@@ -239,6 +248,15 @@ function createSecondBasketballHoop() {
   pole.position.set(15.3, 4, 0); // Behind the backboard on right side
   pole.castShadow = true;
   scene.add(pole);
+
+  // Support arm connecting pole to backboard
+  const supportArmGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.3, 8);
+  const supportArmMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 }); // Dark gray
+  const supportArm = new THREE.Mesh(supportArmGeometry, supportArmMaterial);
+  supportArm.position.set(15.15, 7.7, 0); // Position lower at top of pole height
+  supportArm.rotation.z = -Math.PI / 2; // Rotate to connect pole to backboard
+  supportArm.castShadow = true;
+  scene.add(supportArm);
 }
 
 // Create basketball at center court
