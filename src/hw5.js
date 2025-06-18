@@ -228,9 +228,104 @@ function createSecondBasketballHoop() {
   scene.add(pole);
 }
 
+// Create basketball at center court
+function createBasketball() {
+  // Basketball sphere
+  const basketballGeometry = new THREE.SphereGeometry(0.8, 32, 32);
+  const basketballMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0xff8c00,  // Orange color
+    shininess: 30
+  });
+  const basketball = new THREE.Mesh(basketballGeometry, basketballMaterial);
+  basketball.position.set(0, 0.8, 0); // Position at center court, slightly above surface
+  basketball.castShadow = true;
+  basketball.receiveShadow = true;
+  scene.add(basketball);
+
+  // Basketball seams - create realistic seam pattern
+  const ballRadius = 0.8;
+  
+  // Main vertical seams (longitudinal lines)
+  const verticalSeams = 4;
+  for (let i = 0; i < verticalSeams; i++) {
+    const angle = (i / verticalSeams) * 2 * Math.PI;
+    
+    // Create curved seam that follows the sphere
+    const seamPoints = [];
+    const segments = 32;
+    for (let j = 0; j <= segments; j++) {
+      const phi = (j / segments) * Math.PI - Math.PI / 2; // Latitude from -90 to 90 degrees
+      const x = ballRadius * Math.cos(phi) * Math.cos(angle);
+      const y = ballRadius * Math.sin(phi);
+      const z = ballRadius * Math.cos(phi) * Math.sin(angle);
+      seamPoints.push(x, y, z);
+    }
+    
+    const seamGeometry = new THREE.BufferGeometry();
+    seamGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(seamPoints), 3));
+    
+    const seamMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 3 });
+    const seam = new THREE.Line(seamGeometry, seamMaterial);
+    seam.position.set(0, 0.8, 0);
+    scene.add(seam);
+  }
+
+  // Horizontal seams (latitudinal lines) - create the classic basketball pattern
+  const horizontalSeamHeights = [-0.4, 0, 0.4]; // Three horizontal seams
+  for (let height of horizontalSeamHeights) {
+    const radius = Math.sqrt(ballRadius * ballRadius - height * height);
+    
+    const horizontalSeamPoints = [];
+    const segments = 32;
+    for (let i = 0; i <= segments; i++) {
+      const angle = (i / segments) * 2 * Math.PI;
+      const x = radius * Math.cos(angle);
+      const z = radius * Math.sin(angle);
+      horizontalSeamPoints.push(x, height, z);
+    }
+    
+    const horizontalSeamGeometry = new THREE.BufferGeometry();
+    horizontalSeamGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(horizontalSeamPoints), 3));
+    
+    const horizontalSeamMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 3 });
+    const horizontalSeam = new THREE.Line(horizontalSeamGeometry, horizontalSeamMaterial);
+    horizontalSeam.position.set(0, 0.8, 0);
+    scene.add(horizontalSeam);
+  }
+
+  // Additional curved seams for more realistic basketball pattern
+  const curvedSeams = 4;
+  for (let i = 0; i < curvedSeams; i++) {
+    const angle = (i / curvedSeams) * 2 * Math.PI + Math.PI / 4; // Offset by 45 degrees
+    
+    // Create curved seam that goes from one pole to the other with a curve
+    const seamPoints = [];
+    const segments = 32;
+    for (let j = 0; j <= segments; j++) {
+      const phi = (j / segments) * Math.PI - Math.PI / 2;
+      const curveOffset = Math.sin(phi * 2) * 0.1; // Add curve to the seam
+      const adjustedAngle = angle + curveOffset;
+      
+      const x = ballRadius * Math.cos(phi) * Math.cos(adjustedAngle);
+      const y = ballRadius * Math.sin(phi);
+      const z = ballRadius * Math.cos(phi) * Math.sin(adjustedAngle);
+      seamPoints.push(x, y, z);
+    }
+    
+    const seamGeometry = new THREE.BufferGeometry();
+    seamGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(seamPoints), 3));
+    
+    const seamMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 });
+    const seam = new THREE.Line(seamGeometry, seamMaterial);
+    seam.position.set(0, 0.8, 0);
+    scene.add(seam);
+  }
+}
+
 createBasketballCourt();
 createBasketballHoop();
 createSecondBasketballHoop();
+createBasketball();
 
 const cameraTranslate = new THREE.Matrix4();
 cameraTranslate.makeTranslation(0, 15, 30);
