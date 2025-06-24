@@ -163,176 +163,80 @@ function createBasketballCourt() {
 
 // Create the first basketball hoop (left side of court)
 function createBasketballHoop() {
-  // Backboard - white semi-transparent rectangular surface
-  const backboardGeometry = new THREE.BoxGeometry(4, 3, 0.1);
-  const backboardMaterial = new THREE.MeshPhongMaterial({ 
-    color: 0xffffff, 
-    transparent: true, 
-    opacity: 0.8 
-  });
-  const backboard = new THREE.Mesh(backboardGeometry, backboardMaterial);
+  // Create and position the branded backboard
+  const backboard = createBrandedBackboard();
   backboard.position.set(-15, 8, 0); // Position at left side of court
   backboard.rotation.y = Math.PI / 2; // Rotate to face the court
-  backboard.castShadow = true;
-  backboard.receiveShadow = true;
   scene.add(backboard);
 
   // Orange rim (torus) for the basketball hoop
   const rimGeometry = new THREE.TorusGeometry(0.9, 0.1, 8, 16);
-  const rimMaterial = new THREE.MeshPhongMaterial({ color: 0xff8c00 }); // Orange color
+  const rimMaterial = new THREE.MeshPhongMaterial({ color: 0xff8c00 });
   const rim = new THREE.Mesh(rimGeometry, rimMaterial);
-  rim.position.set(-14.1, 6.8, 0); // Position in front of backboard
-  rim.rotation.x = Math.PI / 2; // Rotate to make rim horizontal
+  rim.position.set(-14.1, 6.8, 0);
+  rim.rotation.x = Math.PI / 2;
   rim.castShadow = true;
   scene.add(rim);
 
-  // Basketball net - made from line segments
-  const netSegments = 12; // Number of vertical lines in the net
-  const netHeight = 1.5;  // Height of the net
-  const netRadius = 0.9;  // Radius of the net (matches rim)
-  
-  // Create vertical lines of the net
-  for (let i = 0; i < netSegments; i++) {
-    const angle = (i / netSegments) * 2 * Math.PI;
-    const x = Math.cos(angle) * netRadius;
-    const z = Math.sin(angle) * netRadius;
-    
-    const netLineGeometry = new THREE.BufferGeometry();
-    const netLineVertices = new Float32Array([
-      x, 0, z,           // Top of net line
-      x, -netHeight, z   // Bottom of net line
-    ]);
-    netLineGeometry.setAttribute('position', new THREE.BufferAttribute(netLineVertices, 3));
-    
-    const netLineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
-    const netLine = new THREE.Line(netLineGeometry, netLineMaterial);
-    netLine.position.set(-14.1, 6.8, 0); // Position at rim
-    scene.add(netLine);
-  }
-  
-  // Create horizontal rings of the net
-  for (let ring = 1; ring <= 4; ring++) {
-    const ringHeight = -(ring * netHeight / 5); // Staggered heights
-    const ringRadius = netRadius * (1 - ring / 5); // Decreasing radius for cone shape
-    
-    const ringGeometry = new THREE.BufferGeometry();
-    const ringPoints = [];
-    for (let i = 0; i <= netSegments; i++) {
-      const angle = (i / netSegments) * 2 * Math.PI;
-      const x = Math.cos(angle) * ringRadius;
-      const z = Math.sin(angle) * ringRadius;
-      ringPoints.push(x, ringHeight, z);
-    }
-    ringGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(ringPoints), 3));
-    
-    const ringMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
-    const ringLine = new THREE.Line(ringGeometry, ringMaterial);
-    ringLine.position.set(-14.1, 6.8, 0); // Position at rim
-    scene.add(ringLine);
-  }
+  // Create and position the chain net
+  const chainNet = createChainNet();
+  chainNet.position.set(-14.1, 6.8, 0); // Position under the rim
+  scene.add(chainNet);
 
   // Support pole behind the backboard
   const poleGeometry = new THREE.CylinderGeometry(0.2, 0.2, 8, 8);
-  const poleMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 }); // Dark gray
+  const poleMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
   const pole = new THREE.Mesh(poleGeometry, poleMaterial);
-  pole.position.set(-15.3, 4, 0); // Behind the backboard
+  pole.position.set(-15.3, 4, 0);
   pole.castShadow = true;
   scene.add(pole);
 
   // Support arm connecting pole to backboard
   const supportArmGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.3, 8);
-  const supportArmMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 }); // Dark gray
+  const supportArmMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
   const supportArm = new THREE.Mesh(supportArmGeometry, supportArmMaterial);
-  supportArm.position.set(-15.15, 7.7, 0); // Position at top of pole
-  supportArm.rotation.z = Math.PI / 2; // Rotate to connect pole to backboard
+  supportArm.position.set(-15.15, 7.7, 0);
+  supportArm.rotation.z = Math.PI / 2;
   supportArm.castShadow = true;
   scene.add(supportArm);
 }
 
-// Create the second basketball hoop (right side of court) - mirrored version
+// Create the second basketball hoop (right side of court)
 function createSecondBasketballHoop() {
-  // Backboard - white semi-transparent rectangular surface (mirrored)
-  const backboardGeometry = new THREE.BoxGeometry(4, 3, 0.1);
-  const backboardMaterial = new THREE.MeshPhongMaterial({ 
-    color: 0xffffff, 
-    transparent: true, 
-    opacity: 0.8 
-  });
-  const backboard = new THREE.Mesh(backboardGeometry, backboardMaterial);
+  // Create and position the branded backboard
+  const backboard = createBrandedBackboard();
   backboard.position.set(15, 8, 0); // Position at right side of court
-  backboard.rotation.y = -Math.PI / 2; // Rotate to face the court (opposite direction)
-  backboard.castShadow = true;
-  backboard.receiveShadow = true;
+  backboard.rotation.y = -Math.PI / 2; // Rotate to face the court
   scene.add(backboard);
 
-  // Orange rim (torus) for the basketball hoop (mirrored)
+  // Orange rim (torus) for the basketball hoop
   const rimGeometry = new THREE.TorusGeometry(0.9, 0.1, 8, 16);
-  const rimMaterial = new THREE.MeshPhongMaterial({ color: 0xff8c00 }); // Orange color
+  const rimMaterial = new THREE.MeshPhongMaterial({ color: 0xff8c00 });
   const rim = new THREE.Mesh(rimGeometry, rimMaterial);
-  rim.position.set(14.1, 6.8, 0); // Position in front of backboard (right side)
-  rim.rotation.x = Math.PI / 2; // Rotate to make rim horizontal
+  rim.position.set(14.1, 6.8, 0);
+  rim.rotation.x = Math.PI / 2;
   rim.castShadow = true;
   scene.add(rim);
 
-  // Basketball net - made from line segments (mirrored)
-  const netSegments = 12; // Number of vertical lines in the net
-  const netHeight = 1.5;  // Height of the net
-  const netRadius = 0.9;  // Radius of the net (matches rim)
-  
-  // Create vertical lines of the net
-  for (let i = 0; i < netSegments; i++) {
-    const angle = (i / netSegments) * 2 * Math.PI;
-    const x = Math.cos(angle) * netRadius;
-    const z = Math.sin(angle) * netRadius;
-    
-    const netLineGeometry = new THREE.BufferGeometry();
-    const netLineVertices = new Float32Array([
-      x, 0, z,           // Top of net line
-      x, -netHeight, z   // Bottom of net line
-    ]);
-    netLineGeometry.setAttribute('position', new THREE.BufferAttribute(netLineVertices, 3));
-    
-    const netLineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
-    const netLine = new THREE.Line(netLineGeometry, netLineMaterial);
-    netLine.position.set(14.1, 6.8, 0); // Position at rim (right side)
-    scene.add(netLine);
-  }
-  
-  // Create horizontal rings of the net
-  for (let ring = 1; ring <= 4; ring++) {
-    const ringHeight = -(ring * netHeight / 5); // Staggered heights
-    const ringRadius = netRadius * (1 - ring / 5); // Decreasing radius for cone shape
-    
-    const ringGeometry = new THREE.BufferGeometry();
-    const ringPoints = [];
-    for (let i = 0; i <= netSegments; i++) {
-      const angle = (i / netSegments) * 2 * Math.PI;
-      const x = Math.cos(angle) * ringRadius;
-      const z = Math.sin(angle) * ringRadius;
-      ringPoints.push(x, ringHeight, z);
-    }
-    ringGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(ringPoints), 3));
-    
-    const ringMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
-    const ringLine = new THREE.Line(ringGeometry, ringMaterial);
-    ringLine.position.set(14.1, 6.8, 0); // Position at rim (right side)
-    scene.add(ringLine);
-  }
+  // Create and position the chain net
+  const chainNet = createChainNet();
+  chainNet.position.set(14.1, 6.8, 0); // Position under the rim
+  scene.add(chainNet);
 
-  // Support pole behind the backboard (mirrored)
+  // Support pole behind the backboard
   const poleGeometry = new THREE.CylinderGeometry(0.2, 0.2, 8, 8);
-  const poleMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 }); // Dark gray
+  const poleMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
   const pole = new THREE.Mesh(poleGeometry, poleMaterial);
-  pole.position.set(15.3, 4, 0); // Behind the backboard (right side)
+  pole.position.set(15.3, 4, 0);
   pole.castShadow = true;
   scene.add(pole);
 
-  // Support arm connecting pole to backboard (mirrored)
+  // Support arm connecting pole to backboard
   const supportArmGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.3, 8);
-  const supportArmMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 }); // Dark gray
+  const supportArmMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
   const supportArm = new THREE.Mesh(supportArmGeometry, supportArmMaterial);
-  supportArm.position.set(15.15, 7.85, 0); // Position at top of pole (right side)
-  supportArm.rotation.z = -Math.PI / 2; // Rotate to connect pole to backboard (opposite direction)
+  supportArm.position.set(15.15, 7.85, 0);
+  supportArm.rotation.z = -Math.PI / 2;
   supportArm.castShadow = true;
   scene.add(supportArm);
 }
@@ -529,6 +433,105 @@ function createAtmosphere() {
     bleacher.receiveShadow = true;
     scene.add(bleacher);
   }
+}
+
+// -- Helper functions for creating detailed hoop components --
+
+/**
+ * Creates a branded backboard with a shooter's square and a logo.
+ * @returns {THREE.Group} A group containing the backboard and its branding.
+ */
+function createBrandedBackboard() {
+  const backboardGroup = new THREE.Group();
+
+  // Main backboard plane (semi-transparent)
+  const backboardGeometry = new THREE.BoxGeometry(4, 3, 0.1);
+  const backboardMaterial = new THREE.MeshPhongMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.75
+  });
+  const backboard = new THREE.Mesh(backboardGeometry, backboardMaterial);
+  backboard.castShadow = true;
+  backboard.receiveShadow = true;
+  backboardGroup.add(backboard);
+
+  // Branding via Canvas Texture
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  canvas.width = 256;
+  canvas.height = 192; // 4:3 aspect ratio
+
+  // Draw the shooter's square (inner box)
+  context.strokeStyle = '#ff0000'; // Red outline
+  context.lineWidth = 8;
+  context.strokeRect(canvas.width * 0.25, canvas.height * 0.2, canvas.width * 0.5, canvas.height * 0.4);
+  
+  // Draw a brand logo
+  context.fillStyle = 'rgba(0, 0, 0, 0.8)';
+  context.font = 'bold 24px Arial';
+  context.textAlign = 'center';
+  context.fillText("BENNY'S-HOOPS", canvas.width / 2, 40);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  const brandingMaterial = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true
+  });
+  const brandingPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.8, 2.85), // Slightly smaller than the backboard
+    brandingMaterial
+  );
+
+  // Position on the front face of the backboard
+  brandingPlane.position.z = 0.06;
+  backboardGroup.add(brandingPlane);
+
+  return backboardGroup;
+}
+
+/**
+ * Creates a realistic chain net using small torus geometries.
+ * @returns {THREE.Group} A group containing all the chain links of the net.
+ */
+function createChainNet() {
+  const netGroup = new THREE.Group();
+  const netMaterial = new THREE.MeshPhongMaterial({ color: 0xcccccc, shininess: 90 });
+
+  const numStrands = 12;
+  const linksPerStrand = 10;
+  const linkRadius = 0.04;
+  const linkTube = 0.01;
+  const rimRadius = 0.9;
+  const netHeight = 1.2;
+
+  for (let i = 0; i < numStrands; i++) {
+    const angle = (i / numStrands) * Math.PI * 2;
+
+    for (let j = 0; j < linksPerStrand; j++) {
+      const link = new THREE.Mesh(
+        new THREE.TorusGeometry(linkRadius, linkTube, 8, 16),
+        netMaterial
+      );
+
+      // Taper the net downwards
+      const taper = 1.0 - 0.4 * (j / linksPerStrand);
+      const x = rimRadius * taper * Math.cos(angle);
+      const y = -j * (netHeight / linksPerStrand) - linkRadius;
+      const z = rimRadius * taper * Math.sin(angle);
+
+      link.position.set(x, y, z);
+      link.rotation.x = Math.PI / 2; // Orient links to hang down
+
+      // Alternate link rotation for a chain effect
+      if (j % 2 !== 0) {
+        link.rotation.z = Math.PI / 2;
+      }
+
+      netGroup.add(link);
+    }
+  }
+  return netGroup;
 }
 
 createBasketballCourt();
