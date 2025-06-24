@@ -133,8 +133,32 @@ function createBasketballCourt() {
   const threePointArc2Geometry = new THREE.BufferGeometry().setFromPoints(threePointArc2Points);
   const threePointArc2 = new THREE.Line(threePointArc2Geometry, new THREE.LineBasicMaterial({ color: 0xffffff }));
   threePointArc2.position.set(15, 0.03, 0);
-  threePointArc2.rotation.x = -Math.PI / 2;
+  threePointArc2.rotation.x = -Math.PI / 2; // Lay flat on court
   scene.add(threePointArc2);
+
+  // --- Free-Throw Lines ---
+
+  // Free-throw line for the left hoop
+  const ftLineLeftGeo = new THREE.BufferGeometry();
+  const ftLineLeftVertices = new Float32Array([
+    -10, 0, -3, // Start point
+    -10, 0, 3   // End point
+  ]);
+  ftLineLeftGeo.setAttribute('position', new THREE.BufferAttribute(ftLineLeftVertices, 3));
+  const ftLineLeft = new THREE.Line(ftLineLeftGeo, new THREE.LineBasicMaterial({ color: 0xffffff }));
+  ftLineLeft.position.y = 0.01; // Position slightly above the court
+  scene.add(ftLineLeft);
+
+  // Free-throw line for the right hoop
+  const ftLineRightGeo = new THREE.BufferGeometry();
+  const ftLineRightVertices = new Float32Array([
+    10, 0, -3, // Start point
+    10, 0, 3   // End point
+  ]);
+  ftLineRightGeo.setAttribute('position', new THREE.BufferAttribute(ftLineRightVertices, 3));
+  const ftLineRight = new THREE.Line(ftLineRightGeo, new THREE.LineBasicMaterial({ color: 0xffffff }));
+  ftLineRight.position.y = 0.01; // Position slightly above the court
+  scene.add(ftLineRight);
 }
 
 // Create the first basketball hoop (left side of court)
