@@ -418,14 +418,38 @@ function createAtmosphere() {
   scoreboard.receiveShadow = true;
   scene.add(scoreboard);
 
+  // Create a canvas for the scoreboard texture
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  canvas.width = 512;
+  canvas.height = 256;
+
+  // Style the scoreboard text
+  context.fillStyle = '#1a1a1a'; // Dark background
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = '#ff8c00'; // Orange text
+  context.font = 'bold 48px Arial';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  
+  // Draw team names and scores
+  context.fillText('HOME', canvas.width / 4, canvas.height / 4);
+  context.fillText('GUEST', (canvas.width / 4) * 3, canvas.height / 4);
+  context.font = 'bold 96px Arial';
+  context.fillText('00', canvas.width / 4, (canvas.height / 2) + 20);
+  context.fillText('00', (canvas.width / 4) * 3, (canvas.height / 2) + 20);
+
+  // Create texture from canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  const screenMaterial = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+  
   // Scoreboard screen
-  const screenGeometry = new THREE.PlaneGeometry(6, 2.5);
-  const screenMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Green LED look
+  const screenGeometry = new THREE.PlaneGeometry(7.5, 3.75);
   const screen = new THREE.Mesh(screenGeometry, screenMaterial);
-  screen.position.set(0, 12, -11.6);
+  screen.position.set(0, 12, -11.45); // Position on the front of the scoreboard
   scene.add(screen);
 
-  // Bleachers - left side
+  // Bleachers - left side (behind court)
   for (let row = 0; row < 5; row++) {
     const bleacherGeometry = new THREE.BoxGeometry(20, 0.5, 2);
     const bleacherMaterial = new THREE.MeshPhongMaterial({ color: 0x666666 });
