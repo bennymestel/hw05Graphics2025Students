@@ -701,6 +701,14 @@ window.addEventListener('keydown', (e) => {
     shotPower = Math.max(0, shotPower - 5);
     updateShotPowerDisplay();
   }
+  // Reset basketball position with R key
+  if (e.key.toLowerCase() === 'r') {
+    if (basketball) {
+      basketball.position.set(0, 0.8, 0);
+      basketballVelocity.set(0, 0, 0);
+      isBallInAir = false;
+    }
+  }
   // Shoot with spacebar if not already in air
   if (e.code === 'Space' && !isBallInAir) {
     // --- SPACEBAR SHOOT LOGIC ---
