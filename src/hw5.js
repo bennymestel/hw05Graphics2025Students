@@ -1,6 +1,9 @@
 import { OrbitControls } from './OrbitControls.js';
 
 let basketball;
+// References to rim and backboard meshes for collision
+let leftRim = null, rightRim = null;
+let leftBackboard = null, rightBackboard = null;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -170,6 +173,14 @@ function createBasketballHoop() {
   backboard.position.set(-15, 8, 0); // Position at left side of court
   backboard.rotation.y = Math.PI / 2; // Rotate to face the court
   scene.add(backboard);
+  leftBackboard = backboard; // Store reference
+
+  // --- Backboard collision region matches mesh (no visual helper) ---
+  // const bbWidth = 4, bbHeight = 3, bbY = 8, bbZ = 0;
+  // const leftBBMin = new THREE.Vector3(-15 - 0.05, bbY - bbHeight/2, bbZ - bbWidth/2);
+  // const leftBBMax = new THREE.Vector3(-15 + 0.05, bbY + bbHeight/2, bbZ + bbWidth/2);
+  // const leftBBBox = new THREE.Box3(leftBBMin, leftBBMax);
+  // (No Box3Helper)
 
   // Orange rim (torus) for the basketball hoop
   const rimGeometry = new THREE.TorusGeometry(0.9, 0.1, 8, 16);
@@ -179,6 +190,7 @@ function createBasketballHoop() {
   rim.rotation.x = Math.PI / 2;
   rim.castShadow = true;
   scene.add(rim);
+  leftRim = rim; // Store reference
 
   // Create and position the chain net
   const chainNet = createChainNet();
@@ -210,6 +222,14 @@ function createSecondBasketballHoop() {
   backboard.position.set(15, 8, 0); // Position at right side of court
   backboard.rotation.y = -Math.PI / 2; // Rotate to face the court
   scene.add(backboard);
+  rightBackboard = backboard; // Store reference
+
+  // --- Backboard collision region matches mesh (no visual helper) ---
+  // const bbWidth = 4, bbHeight = 3, bbY = 8, bbZ = 0;
+  // const rightBBMin = new THREE.Vector3(15 - 0.05, bbY - bbHeight/2, bbZ - bbWidth/2);
+  // const rightBBMax = new THREE.Vector3(15 + 0.05, bbY + bbHeight/2, bbZ + bbWidth/2);
+  // const rightBBBox = new THREE.Box3(rightBBMin, rightBBMax);
+  // (No Box3Helper)
 
   // Orange rim (torus) for the basketball hoop
   const rimGeometry = new THREE.TorusGeometry(0.9, 0.1, 8, 16);
@@ -219,6 +239,7 @@ function createSecondBasketballHoop() {
   rim.rotation.x = Math.PI / 2;
   rim.castShadow = true;
   scene.add(rim);
+  rightRim = rim; // Store reference
 
   // Create and position the chain net
   const chainNet = createChainNet();
@@ -562,6 +583,18 @@ const keysPressed = {
 // Shot power state
 let shotPower = 50; // Start at 50%
 
+// Basketball velocity and gravity
+let basketballVelocity = new THREE.Vector3(0, 0, 0);
+const gravity = new THREE.Vector3(0, -0.02, 0); // Gravity strength (tweak as needed)
+let isBallInAir = false;
+
+// Hoop positions (rim center)
+const leftHoopPos = new THREE.Vector3(-14.1, 6.8, 0);
+const rightHoopPos = new THREE.Vector3(14.1, 6.8, 0);
+
+// Track previous basketball position for robust collision
+let prevBallPos = null;
+
 // --- Camera Presets ---
 const cameraPresets = [
     { // Default wide view
@@ -668,6 +701,26 @@ window.addEventListener('keydown', (e) => {
     shotPower = Math.max(0, shotPower - 5);
     updateShotPowerDisplay();
   }
+  // Shoot with spacebar if not already in air
+  if (e.code === 'Space' && !isBallInAir) {
+    // --- SPACEBAR SHOOT LOGIC ---
+    // 1. Find the nearest hoop
+    const ballPos = basketball.position.clone();
+    const distToLeft = ballPos.distanceTo(leftHoopPos);
+    const distToRight = ballPos.distanceTo(rightHoopPos);
+    const targetHoop = distToLeft < distToRight ? leftHoopPos : rightHoopPos;
+    // 2. Compute direction from ball to hoop
+    const direction = targetHoop.clone().sub(ballPos);
+    // 3. Add upward component for arc (proportional to shot power)
+    direction.y += 6 * (shotPower / 100);
+    // 4. Normalize direction
+    direction.normalize();
+    // 5. Set velocity magnitude based on shot power
+    const speed = 0.5 + 1.5 * (shotPower / 100); // Tweak as needed
+    basketballVelocity.copy(direction.multiplyScalar(speed));
+    // 6. Start flight simulation
+    isBallInAir = true;
+  }
 });
 window.addEventListener('keyup', (e) => {
   if (e.key in keysPressed) {
@@ -702,30 +755,106 @@ function animate() {
   // Basketball movement speed (units per frame)
   const moveSpeed = 0.2;
   if (basketball) {
-    let moved = false;
-    // Move left/right (x axis)
-    if (keysPressed.ArrowLeft) {
-      basketball.position.x -= moveSpeed;
-      moved = true;
+    if (!isBallInAir) {
+      let moved = false;
+      // Move left/right (x axis)
+      if (keysPressed.ArrowLeft) {
+        basketball.position.x -= moveSpeed;
+        moved = true;
+      }
+      if (keysPressed.ArrowRight) {
+        basketball.position.x += moveSpeed;
+        moved = true;
+      }
+      // Move forward/backward (z axis)
+      if (keysPressed.ArrowUp) {
+        basketball.position.z -= moveSpeed;
+        moved = true;
+      }
+      if (keysPressed.ArrowDown) {
+        basketball.position.z += moveSpeed;
+        moved = true;
+      }
+      // Optionally, clamp basketball position to stay within court bounds
+      const courtHalfWidth = 15;
+      const courtHalfLength = 7.5;
+      basketball.position.x = Math.max(-courtHalfWidth, Math.min(courtHalfWidth, basketball.position.x));
+      basketball.position.z = Math.max(-courtHalfLength, Math.min(courtHalfLength, basketball.position.z));
+    } else {
+      // Store previous position before moving
+      if (!prevBallPos) prevBallPos = basketball.position.clone();
+      const oldPos = prevBallPos.clone();
+      basketball.position.add(basketballVelocity);
+      basketballVelocity.add(gravity);
+
+      // --- IMPROVED COLLISION DETECTION ---
+      const ballRadius = 0.8;
+      [
+        {rim: leftRim, backboard: leftBackboard, rimCenter: leftHoopPos, isLeft: true},
+        {rim: rightRim, backboard: rightBackboard, rimCenter: rightHoopPos, isLeft: false}
+      ].forEach(({rim, backboard, rimCenter, isLeft}) => {
+        if (!rim || !backboard) return;
+        // --- Rim collision (solid tube) ---
+        const rimY = rimCenter.y;
+        const rimXZ = new THREE.Vector2(rimCenter.x, rimCenter.z);
+        const ballXZ = new THREE.Vector2(basketball.position.x, basketball.position.z);
+        const distXZ = rimXZ.distanceTo(ballXZ);
+        const rimRadius = 0.9;
+        const rimTube = 0.1; // Torus tube radius
+        if (Math.abs(basketball.position.y - rimY) < ballRadius + rimTube) {
+          if (distXZ > rimRadius - (rimTube + ballRadius) && distXZ < rimRadius + (rimTube + ballRadius)) {
+            const fromRim = ballXZ.clone().sub(rimXZ).normalize();
+            const vXZ = new THREE.Vector2(basketballVelocity.x, basketballVelocity.z);
+            const dot = vXZ.dot(fromRim);
+            vXZ.sub(fromRim.clone().multiplyScalar(2 * dot));
+            basketballVelocity.x = vXZ.x * 0.4; // Dampen (was 0.7)
+            basketballVelocity.z = vXZ.y * 0.4;
+            const pushOut = rimRadius + (rimTube + ballRadius) + 0.01;
+            basketball.position.x = rimCenter.x + fromRim.x * pushOut;
+            basketball.position.z = rimCenter.z + fromRim.y * pushOut;
+          }
+        }
+        // --- Backboard collision (robust plane crossing) ---
+        const backboardX = isLeft ? -15 : 15;
+        const bbWidth = 4; // widened for debug
+        const bbHeight = 3; // widened for debug
+        const bbY = 8; // group position y
+        const bbZ = 0; // group position z
+        // Only check if ball is within backboard Y/Z bounds
+        if (
+          basketball.position.y > bbY - bbHeight/2 && basketball.position.y < bbY + bbHeight/2 &&
+          Math.abs(basketball.position.z - bbZ) < bbWidth/2
+        ) {
+          // Check if the ball crossed the backboard plane between frames
+          const prevX = oldPos.x;
+          const currX = basketball.position.x;
+          if (isLeft) {
+            if (prevX - ballRadius > backboardX && currX - ballRadius <= backboardX && basketballVelocity.x < 0) {
+              // Reflect X velocity
+              basketballVelocity.x *= -0.4; // Dampen (was 0.7)
+              // Move ball just outside the backboard
+              basketball.position.x = backboardX - ballRadius - 0.01;
+              // console.log('Backboard collision (left)');
+            }
+          } else {
+            if (prevX + ballRadius < backboardX && currX + ballRadius >= backboardX && basketballVelocity.x > 0) {
+              basketballVelocity.x *= -0.4; // Dampen (was 0.7)
+              basketball.position.x = backboardX + ballRadius + 0.01;
+              // console.log('Backboard collision (right)');
+            }
+          }
+        }
+      });
+
+      // If ball hits the ground, stop it
+      if (basketball.position.y <= 0.8) {
+        basketball.position.y = 0.8;
+        basketballVelocity.set(0, 0, 0);
+        isBallInAir = false;
+      }
+      // Update previous position for next frame
+      prevBallPos = basketball.position.clone();
     }
-    if (keysPressed.ArrowRight) {
-      basketball.position.x += moveSpeed;
-      moved = true;
-    }
-    // Move forward/backward (z axis)
-    if (keysPressed.ArrowUp) {
-      basketball.position.z -= moveSpeed;
-      moved = true;
-    }
-    if (keysPressed.ArrowDown) {
-      basketball.position.z += moveSpeed;
-      moved = true;
-    }
-    // Optionally, clamp basketball position to stay within court bounds
-    const courtHalfWidth = 15;
-    const courtHalfLength = 7.5;
-    basketball.position.x = Math.max(-courtHalfWidth, Math.min(courtHalfWidth, basketball.position.x));
-    basketball.position.z = Math.max(-courtHalfLength, Math.min(courtHalfLength, basketball.position.z));
   }
 
   renderer.render(scene, camera);
