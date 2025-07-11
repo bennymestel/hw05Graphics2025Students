@@ -839,6 +839,85 @@ function updateScoreDisplay() {
   }
 }
 
+// Message overlay for shot result
+const shotMessage = document.createElement('div');
+shotMessage.style.position = 'absolute';
+shotMessage.style.top = '50%';
+shotMessage.style.left = '50%';
+shotMessage.style.transform = 'translate(-50%, -50%)';
+shotMessage.style.color = '#fff';
+shotMessage.style.background = 'rgba(0,0,0,0.8)';
+shotMessage.style.padding = '24px 48px';
+shotMessage.style.borderRadius = '12px';
+shotMessage.style.fontSize = '2.2rem';
+shotMessage.style.fontWeight = 'bold';
+shotMessage.style.letterSpacing = '2px';
+shotMessage.style.textAlign = 'center';
+shotMessage.style.zIndex = '1000';
+shotMessage.style.display = 'none';
+shotMessage.style.boxShadow = '0 2px 16px rgba(0,0,0,0.4)';
+document.body.appendChild(shotMessage);
+let shotMessageTimeout = null;
+function showShotMessage(text, color) {
+  shotMessage.textContent = text;
+  shotMessage.style.color = color;
+  shotMessage.style.display = 'block';
+  if (shotMessageTimeout) clearTimeout(shotMessageTimeout);
+  shotMessageTimeout = setTimeout(() => {
+    shotMessage.style.display = 'none';
+  }, 1200);
+}
+
+// Visual effect: Confetti burst at rim for successful shots
+function showConfettiBurst(rimCenter) {
+  const confettiGroup = new THREE.Group();
+  const colors = [0xff8c00, 0x00ff00, 0x00cfff, 0xff00c8, 0xffff00, 0xffffff];
+  const numParticles = 32;
+  for (let i = 0; i < numParticles; i++) {
+    const geometry = new THREE.SphereGeometry(0.08, 6, 6);
+    const material = new THREE.MeshBasicMaterial({ color: colors[Math.floor(Math.random() * colors.length)] });
+    const particle = new THREE.Mesh(geometry, material);
+    // Start at rim center, slightly above
+    particle.position.set(rimCenter.x, rimCenter.y + 0.2, rimCenter.z);
+    // Give each particle a random velocity
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 0.18 + Math.random() * 0.22;
+    const upward = 0.12 + Math.random() * 0.18;
+    particle.userData.velocity = new THREE.Vector3(
+      Math.cos(angle) * speed,
+      upward,
+      Math.sin(angle) * speed
+    );
+    confettiGroup.add(particle);
+  }
+  scene.add(confettiGroup);
+
+  const gravity = -0.012;
+  let frames = 0;
+  function animateConfetti() {
+    confettiGroup.children.forEach(particle => {
+      particle.position.add(particle.userData.velocity);
+      particle.userData.velocity.y += gravity;
+      // Fade out
+      if (particle.material.opacity === undefined) {
+        particle.material.transparent = true;
+        particle.material.opacity = 1;
+      }
+      if (frames > 30) {
+        particle.material.opacity -= 0.04;
+      }
+    });
+    frames++;
+    if (frames < 60) {
+      requestAnimationFrame(animateConfetti);
+    } else {
+      confettiGroup.children.forEach(p => { p.geometry.dispose(); p.material.dispose(); });
+      scene.remove(confettiGroup);
+    }
+  }
+  animateConfetti();
+}
+
 function animate() {
   requestAnimationFrame(animate);
   controls.enabled = isOrbitEnabled;
@@ -963,6 +1042,8 @@ function animate() {
           }
           updateScoreDisplay();
           lastScoreHoop = hoopName;
+          showShotMessage('SHOT MADE!', '#00ff00');
+          showConfettiBurst(rimCenter);
           // Make the ball fall straight down after scoring
           basketballVelocity.x = 0;
           basketballVelocity.z = 0;
@@ -993,6 +1074,10 @@ function animate() {
       if (basketballVelocity.length() < 0.05 && basketball.position.y <= 0.81) {
         basketballVelocity.set(0, 0, 0);
         isBallInAir = false;
+        // If the last shot was not made, show 'MISSED SHOT' message
+        if (totalShots > 0 && shotsMade < totalShots && lastScoreHoop === null) {
+          showShotMessage('MISSED SHOT', '#ff4444');
+        }
       }
       // Update previous position for next frame
       prevBallPos = basketball.position.clone();
