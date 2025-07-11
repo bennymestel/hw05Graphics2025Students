@@ -1,5 +1,7 @@
 import { OrbitControls } from './OrbitControls.js';
 
+let basketball;
+
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
@@ -243,17 +245,20 @@ function createSecondBasketballHoop() {
 
 // Create a realistic basketball at center court
 function createBasketball() {
+  // Basketball group to hold sphere and seams
+  basketball = new THREE.Group();
+
   // Basketball sphere - orange with realistic material properties
   const basketballGeometry = new THREE.SphereGeometry(0.8, 32, 32);
   const basketballMaterial = new THREE.MeshPhongMaterial({ 
     color: 0xff8c00,  // Orange color matching real basketballs
     shininess: 30     // Moderate shininess for realistic appearance
   });
-  const basketball = new THREE.Mesh(basketballGeometry, basketballMaterial);
-  basketball.position.set(0, 0.8, 0); // Position at center court, slightly above surface
-  basketball.castShadow = true;
-  basketball.receiveShadow = true;
-  scene.add(basketball);
+  const basketballMesh = new THREE.Mesh(basketballGeometry, basketballMaterial);
+  basketballMesh.position.set(0, 0, 0); // Centered in group
+  basketballMesh.castShadow = true;
+  basketballMesh.receiveShadow = true;
+  basketball.add(basketballMesh);
 
   // Basketball seams - create realistic seam pattern
   const ballRadius = 0.8; // Radius of the basketball
@@ -279,8 +284,8 @@ function createBasketball() {
     
     const seamMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 3 });
     const seam = new THREE.Line(seamGeometry, seamMaterial);
-    seam.position.set(0, 0.8, 0); // Position at basketball center
-    scene.add(seam);
+    seam.position.set(0, 0, 0); // Centered in group
+    basketball.add(seam);
   }
 
   // Horizontal seams (latitudinal lines) - create the classic basketball pattern
@@ -302,8 +307,8 @@ function createBasketball() {
     
     const horizontalSeamMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 3 });
     const horizontalSeam = new THREE.Line(horizontalSeamGeometry, horizontalSeamMaterial);
-    horizontalSeam.position.set(0, 0.8, 0); // Position at basketball center
-    scene.add(horizontalSeam);
+    horizontalSeam.position.set(0, 0, 0); // Centered in group
+    basketball.add(horizontalSeam);
   }
 
   // Additional curved seams for more realistic basketball pattern
@@ -330,9 +335,15 @@ function createBasketball() {
     
     const seamMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 });
     const seam = new THREE.Line(seamGeometry, seamMaterial);
-    seam.position.set(0, 0.8, 0); // Position at basketball center
-    scene.add(seam);
+    seam.position.set(0, 0, 0); // Centered in group
+    basketball.add(seam);
   }
+
+  // Set initial position of the group (center court, slightly above surface)
+  basketball.position.set(0, 0.8, 0);
+  basketball.castShadow = true;
+  basketball.receiveShadow = true;
+  scene.add(basketball);
 }
 
 // Create scoreboard and bleachers for atmosphere
@@ -540,42 +551,115 @@ createSecondBasketballHoop();
 createBasketball();
 createAtmosphere();
 
-// Set camera position to show the whole court
-camera.position.set(0, 20, 25);
-camera.lookAt(0, 0, 0);
+// Track which keys are pressed
+const keysPressed = {
+  ArrowLeft: false,
+  ArrowRight: false,
+  ArrowUp: false,
+  ArrowDown: false
+};
 
-// Setup OrbitControls with better configuration
+// --- Camera Presets ---
+const cameraPresets = [
+    { // Default wide view
+        position: new THREE.Vector3(0, 20, 30),
+        target: new THREE.Vector3(0, 5, 0)
+    },
+    { // Top-down view
+        position: new THREE.Vector3(0, 35, 0),
+        target: new THREE.Vector3(0, 0, 0)
+    },
+    { // Side-court view
+        position: new THREE.Vector3(-30, 10, 0),
+        target: new THREE.Vector3(0, 5, 0)
+    },
+    { // Behind-the-hoop view
+        position: new THREE.Vector3(-20, 10, 0),
+        target: new THREE.Vector3(15, 8, 0) // Look towards the other hoop
+    }
+];
+
+// Setup OrbitControls for interactive camera movement
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; // Smooth camera movement
+controls.enableDamping = true; // Enable smooth camera movement
 controls.dampingFactor = 0.05;
 controls.screenSpacePanning = false;
-controls.minDistance = 10; // Minimum zoom distance
-controls.maxDistance = 50; // Maximum zoom distance
+controls.minDistance = 5;   // Closer minimum zoom
+controls.maxDistance = 60;  // Increased max distance for top-down view
 controls.maxPolarAngle = Math.PI / 2; // Prevent camera from going below ground
-controls.target.set(0, 5, 0); // Look at center of court, slightly above ground
 
+/**
+ * Sets the camera to a predefined preset position and target.
+ * @param {number} index The index of the preset in the cameraPresets array.
+ */
+function setCameraPreset(index) {
+    if (index < 0 || index >= cameraPresets.length) return;
+    
+    const preset = cameraPresets[index];
+    // Use GSAP for smooth transition if available, otherwise teleport
+    camera.position.copy(preset.position);
+    controls.target.copy(preset.target);
+}
+
+// Initialize camera to the default preset
+setCameraPreset(0);
+
+// Track whether orbit controls are enabled
 let isOrbitEnabled = true;
 
+// Create on-screen instructions for user controls
 const instructionsElement = document.createElement('div');
 instructionsElement.style.position = 'absolute';
 instructionsElement.style.bottom = '20px';
 instructionsElement.style.left = '20px';
 instructionsElement.style.color = 'white';
+instructionsElement.style.backgroundColor = 'rgba(0,0,0,0.5)';
+instructionsElement.style.padding = '10px';
+instructionsElement.style.borderRadius = '5px';
 instructionsElement.style.fontSize = '16px';
 instructionsElement.style.fontFamily = 'Arial, sans-serif';
 instructionsElement.style.textAlign = 'left';
 instructionsElement.innerHTML = `
   <h3>Controls:</h3>
-  <p>O - Toggle orbit camera</p>
-  <p>Mouse - Rotate camera (when enabled)</p>
-  <p>Scroll - Zoom in/out</p>
+  <p><b>1-4:</b> Camera Presets</p>
+  <p><b>O:</b> Toggle Orbit Camera</p>
+  <p><b>Mouse:</b> Rotate (when enabled)</p>
+  <p><b>Scroll:</b> Zoom</p>
 `;
 document.body.appendChild(instructionsElement);
 
+// Handle keyboard input for toggling orbit controls and camera presets
 document.addEventListener('keydown', (e) => {
-  if (e.key === "o" || e.key === "O") {
-    isOrbitEnabled = !isOrbitEnabled;
-    console.log('Orbit controls:', isOrbitEnabled ? 'enabled' : 'disabled');
+  // Use a switch statement for cleaner key handling
+  switch (e.key.toLowerCase()) {
+    case 'o':
+      isOrbitEnabled = !isOrbitEnabled;
+      // console.log('Orbit controls:', isOrbitEnabled ? 'enabled' : 'disabled');
+      break;
+    case '1':
+      setCameraPreset(0);
+      break;
+    case '2':
+      setCameraPreset(1);
+      break;
+    case '3':
+      setCameraPreset(2);
+      break;
+    case '4':
+      setCameraPreset(3);
+      break;
+  }
+});
+
+// Keyboard event listeners for basketball movement
+window.addEventListener('keydown', (e) => {
+  if (e.key in keysPressed) {
+    keysPressed[e.key] = true;
+  }
+});
+window.addEventListener('keyup', (e) => {
+  if (e.key in keysPressed) {
+    keysPressed[e.key] = false;
   }
 });
 
@@ -583,6 +667,36 @@ function animate() {
   requestAnimationFrame(animate);
   controls.enabled = isOrbitEnabled;
   controls.update();
+
+  // Basketball movement speed (units per frame)
+  const moveSpeed = 0.2;
+  if (basketball) {
+    let moved = false;
+    // Move left/right (x axis)
+    if (keysPressed.ArrowLeft) {
+      basketball.position.x -= moveSpeed;
+      moved = true;
+    }
+    if (keysPressed.ArrowRight) {
+      basketball.position.x += moveSpeed;
+      moved = true;
+    }
+    // Move forward/backward (z axis)
+    if (keysPressed.ArrowUp) {
+      basketball.position.z -= moveSpeed;
+      moved = true;
+    }
+    if (keysPressed.ArrowDown) {
+      basketball.position.z += moveSpeed;
+      moved = true;
+    }
+    // Optionally, clamp basketball position to stay within court bounds
+    const courtHalfWidth = 15;
+    const courtHalfLength = 7.5;
+    basketball.position.x = Math.max(-courtHalfWidth, Math.min(courtHalfWidth, basketball.position.x));
+    basketball.position.z = Math.max(-courtHalfLength, Math.min(courtHalfLength, basketball.position.z));
+  }
+
   renderer.render(scene, camera);
 }
 
