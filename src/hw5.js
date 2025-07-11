@@ -4,6 +4,8 @@ let basketball;
 // References to rim and backboard meshes for collision
 let leftRim = null, rightRim = null;
 let leftBackboard = null, rightBackboard = null;
+// Reference to the 3D scoreboard canvas/context/texture
+let scoreboardCanvas, scoreboardContext, scoreboardTexture;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -379,30 +381,24 @@ function createAtmosphere() {
   scene.add(scoreboard);
 
   // Create a canvas for the scoreboard texture
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
-  canvas.width = 512;
-  canvas.height = 256;
-
-  // Style the scoreboard text
-  context.fillStyle = '#1a1a1a'; // Dark background
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = '#ff8c00'; // Orange text
-  context.font = 'bold 48px Arial';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  
-  // Draw team names and scores
-  context.fillText('HOME', canvas.width / 4, canvas.height / 4);
-  context.fillText('GUEST', (canvas.width / 4) * 3, canvas.height / 4);
-  context.font = 'bold 96px Arial';
-  context.fillText('00', canvas.width / 4, (canvas.height / 2) + 20);
-  context.fillText('00', (canvas.width / 4) * 3, (canvas.height / 2) + 20);
-
-  // Create texture from canvas
-  const texture = new THREE.CanvasTexture(canvas);
-  const screenMaterial = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-  
+  scoreboardCanvas = document.createElement('canvas');
+  scoreboardContext = scoreboardCanvas.getContext('2d');
+  scoreboardCanvas.width = 512;
+  scoreboardCanvas.height = 256;
+  // Initial draw
+  scoreboardContext.fillStyle = '#1a1a1a';
+  scoreboardContext.fillRect(0, 0, scoreboardCanvas.width, scoreboardCanvas.height);
+  scoreboardContext.fillStyle = '#ff8c00';
+  scoreboardContext.font = 'bold 48px Arial';
+  scoreboardContext.textAlign = 'center';
+  scoreboardContext.textBaseline = 'middle';
+  scoreboardContext.fillText('HOME', scoreboardCanvas.width / 4, scoreboardCanvas.height / 4);
+  scoreboardContext.fillText('GUEST', (scoreboardCanvas.width / 4) * 3, scoreboardCanvas.height / 4);
+  scoreboardContext.font = 'bold 96px Arial';
+  scoreboardContext.fillText('00', scoreboardCanvas.width / 4, (scoreboardCanvas.height / 2) + 20);
+  scoreboardContext.fillText('00', (scoreboardCanvas.width / 4) * 3, (scoreboardCanvas.height / 2) + 20);
+  scoreboardTexture = new THREE.CanvasTexture(scoreboardCanvas);
+  const screenMaterial = new THREE.MeshBasicMaterial({ map: scoreboardTexture, side: THREE.DoubleSide });
   // Scoreboard screen
   const screenGeometry = new THREE.PlaneGeometry(7.5, 3.75);
   const screen = new THREE.Mesh(screenGeometry, screenMaterial);
@@ -592,6 +588,10 @@ const backboardRestitution = 0.2; // Softer bounce for backboard
 let isBallInAir = false;
 let score = 0;
 let lastScoreHoop = null; // Track which hoop was last scored
+let totalShots = 0;
+let shotsMade = 0;
+let homeScore = 0;
+let guestScore = 0;
 
 // Hoop positions (rim center)
 const leftHoopPos = new THREE.Vector3(-14.1, 6.8, 0);
@@ -718,6 +718,8 @@ window.addEventListener('keydown', (e) => {
   }
   // Shoot with spacebar if not already in air
   if (e.code === 'Space' && !isBallInAir) {
+    totalShots++;
+    updateScoreDisplay();
     // --- PHYSICS-BASED SHOT ARC ---
     // 1. Find the nearest hoop
     const ballPos = basketball.position.clone();
@@ -777,6 +779,64 @@ document.body.appendChild(shotPowerElement);
 
 function updateShotPowerDisplay() {
   shotPowerElement.innerHTML = `<b>Shot Power:</b> <span id="shot-power-value">${shotPower}%</span><br><b>W/S:</b> Increase/Decrease`;
+}
+
+// Remove the old scoreElement and use a single merged scoreboard
+const scoreboardElement = document.createElement('div');
+scoreboardElement.style.position = 'absolute';
+scoreboardElement.style.top = '20px';
+scoreboardElement.style.right = '20px';
+scoreboardElement.style.color = 'white';
+scoreboardElement.style.backgroundColor = 'rgba(0,0,0,0.7)';
+scoreboardElement.style.padding = '18px 28px 18px 28px';
+scoreboardElement.style.borderRadius = '10px';
+scoreboardElement.style.fontSize = '20px';
+scoreboardElement.style.fontFamily = 'Arial, sans-serif';
+scoreboardElement.style.textAlign = 'center';
+scoreboardElement.style.boxShadow = '0 2px 12px rgba(0,0,0,0.3)';
+scoreboardElement.innerHTML = `
+  <div style="font-size: 26px; font-weight: bold; margin-bottom: 8px; letter-spacing: 2px;">
+    <span style="color:#ff8c00">HOME</span> <span id="home-score-value">${homeScore}</span>
+    &nbsp;|&nbsp;
+    <span style="color:#ff8c00">GUEST</span> <span id="guest-score-value">${guestScore}</span>
+  </div>
+  <div style="font-size: 16px; margin-top: 8px;">
+    <b>Attempts:</b> <span id="attempts-value">${totalShots}</span><br>
+    <b>Made:</b> <span id="made-value">${shotsMade}</span><br>
+    <b>Shooting %:</b> <span id="percent-value">0%</span>
+  </div>
+`;
+document.body.appendChild(scoreboardElement);
+
+function updateScoreDisplay() {
+  const percent = totalShots > 0 ? ((shotsMade / totalShots) * 100).toFixed(1) : '0';
+  scoreboardElement.innerHTML = `
+    <div style="font-size: 26px; font-weight: bold; margin-bottom: 8px; letter-spacing: 2px;">
+      <span style="color:#ff8c00">HOME</span> <span id="home-score-value">${homeScore}</span>
+      &nbsp;|&nbsp;
+      <span style="color:#ff8c00">GUEST</span> <span id="guest-score-value">${guestScore}</span>
+    </div>
+    <div style="font-size: 16px; margin-top: 8px;">
+      <b>Attempts:</b> <span id="attempts-value">${totalShots}</span><br>
+      <b>Made:</b> <span id="made-value">${shotsMade}</span><br>
+      <b>Shooting %:</b> <span id="percent-value">${percent}%</span>
+    </div>
+  `;
+  // Update 3D scoreboard if available
+  if (scoreboardContext && scoreboardTexture) {
+    scoreboardContext.fillStyle = '#1a1a1a';
+    scoreboardContext.fillRect(0, 0, scoreboardCanvas.width, scoreboardCanvas.height);
+    scoreboardContext.fillStyle = '#ff8c00';
+    scoreboardContext.font = 'bold 48px Arial';
+    scoreboardContext.textAlign = 'center';
+    scoreboardContext.textBaseline = 'middle';
+    scoreboardContext.fillText('HOME', scoreboardCanvas.width / 4, scoreboardCanvas.height / 4);
+    scoreboardContext.fillText('GUEST', (scoreboardCanvas.width / 4) * 3, scoreboardCanvas.height / 4);
+    scoreboardContext.font = 'bold 96px Arial';
+    scoreboardContext.fillText(homeScore.toString().padStart(2, '0'), scoreboardCanvas.width / 4, (scoreboardCanvas.height / 2) + 20);
+    scoreboardContext.fillText(guestScore.toString().padStart(2, '0'), (scoreboardCanvas.width / 4) * 3, (scoreboardCanvas.height / 2) + 20);
+    scoreboardTexture.needsUpdate = true;
+  }
 }
 
 function animate() {
@@ -894,6 +954,13 @@ function animate() {
           distXZ < rimRadius - rimTube * 0.7 // Must be inside rim, not just touching
         ) {
           score++;
+          shotsMade++;
+          // Team scoring: left hoop = home, right hoop = guest
+          if (isLeft) {
+            homeScore += 2;
+          } else {
+            guestScore += 2;
+          }
           updateScoreDisplay();
           lastScoreHoop = hoopName;
           // Make the ball fall straight down after scoring
