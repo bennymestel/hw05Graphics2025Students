@@ -559,6 +559,9 @@ const keysPressed = {
   ArrowDown: false
 };
 
+// Shot power state
+let shotPower = 50; // Start at 50%
+
 // --- Camera Presets ---
 const cameraPresets = [
     { // Default wide view
@@ -651,10 +654,19 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Keyboard event listeners for basketball movement
+// Keyboard event listeners for basketball movement and shot power
 window.addEventListener('keydown', (e) => {
   if (e.key in keysPressed) {
     keysPressed[e.key] = true;
+  }
+  // Shot power controls
+  if (e.key.toLowerCase() === 'w') {
+    shotPower = Math.min(100, shotPower + 5);
+    updateShotPowerDisplay();
+  }
+  if (e.key.toLowerCase() === 's') {
+    shotPower = Math.max(0, shotPower - 5);
+    updateShotPowerDisplay();
   }
 });
 window.addEventListener('keyup', (e) => {
@@ -662,6 +674,25 @@ window.addEventListener('keyup', (e) => {
     keysPressed[e.key] = false;
   }
 });
+
+// Display shot power on screen
+const shotPowerElement = document.createElement('div');
+shotPowerElement.style.position = 'absolute';
+shotPowerElement.style.top = '20px';
+shotPowerElement.style.left = '20px';
+shotPowerElement.style.color = 'white';
+shotPowerElement.style.backgroundColor = 'rgba(0,0,0,0.5)';
+shotPowerElement.style.padding = '10px';
+shotPowerElement.style.borderRadius = '5px';
+shotPowerElement.style.fontSize = '16px';
+shotPowerElement.style.fontFamily = 'Arial, sans-serif';
+shotPowerElement.style.textAlign = 'left';
+shotPowerElement.innerHTML = `<b>Shot Power:</b> <span id="shot-power-value">${shotPower}%</span><br><b>W/S:</b> Increase/Decrease`;
+document.body.appendChild(shotPowerElement);
+
+function updateShotPowerDisplay() {
+  shotPowerElement.innerHTML = `<b>Shot Power:</b> <span id="shot-power-value">${shotPower}%</span><br><b>W/S:</b> Increase/Decrease`;
+}
 
 function animate() {
   requestAnimationFrame(animate);
