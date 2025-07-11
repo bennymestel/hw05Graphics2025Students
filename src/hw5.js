@@ -851,35 +851,39 @@ function animate() {
             basketball.position.z = rimCenter.z + fromRim.y * pushOut;
           }
         }
-        // --- Backboard collision (robust plane crossing) ---
+        // --- Backboard collision (robust plane crossing, matches visible mesh) ---
+        // Visible backboard mesh: BoxGeometry(4, 3, 0.1), group at (x, 8, 0)
         const backboardX = isLeft ? -15 : 15;
-        const bbWidth = 4; // actual mesh width
-        const bbHeight = 3; // actual mesh height
-        const bbY = 8; // group position y
-        const bbZ = 0; // group position z
+        const bbWidth = 4; // mesh width
+        const bbHeight = 3; // mesh height
+        const bbY = 8; // mesh center y
+        const bbZ = 0; // mesh center z
+        // Only check if ball is within visible backboard Y/Z bounds
         if (
           basketball.position.y > bbY - bbHeight/2 && basketball.position.y < bbY + bbHeight/2 &&
-          Math.abs(basketball.position.z - bbZ) < bbWidth/2
+          basketball.position.z > bbZ - bbWidth/2 && basketball.position.z < bbZ + bbWidth/2
         ) {
           const prevX = oldPos.x;
           const currX = basketball.position.x;
           if (isLeft) {
             if (prevX - ballRadius > backboardX && currX - ballRadius <= backboardX && basketballVelocity.x < 0) {
               basketballVelocity.x *= -backboardRestitution;
-              basketball.position.x = backboardX - ballRadius - 0.01;
-              // Clamp so the entire ball never goes behind the backboard
-              if (basketball.position.x < backboardX - ballRadius) {
-                basketball.position.x = backboardX - ballRadius;
-              }
+              basketball.position.x = backboardX - ballRadius;
+              // Clamp to court boundaries after backboard collision
+              const courtHalfWidth = 15;
+              const courtHalfLength = 7.5;
+              basketball.position.x = Math.max(-courtHalfWidth + ballRadius, Math.min(courtHalfWidth - ballRadius, basketball.position.x));
+              basketball.position.z = Math.max(-courtHalfLength + ballRadius, Math.min(courtHalfLength - ballRadius, basketball.position.z));
             }
           } else {
             if (prevX + ballRadius < backboardX && currX + ballRadius >= backboardX && basketballVelocity.x > 0) {
               basketballVelocity.x *= -backboardRestitution;
-              basketball.position.x = backboardX + ballRadius + 0.01;
-              // Clamp so the entire ball never goes behind the backboard
-              if (basketball.position.x > backboardX + ballRadius) {
-                basketball.position.x = backboardX + ballRadius;
-              }
+              basketball.position.x = backboardX + ballRadius;
+              // Clamp to court boundaries after backboard collision
+              const courtHalfWidth = 15;
+              const courtHalfLength = 7.5;
+              basketball.position.x = Math.max(-courtHalfWidth + ballRadius, Math.min(courtHalfWidth - ballRadius, basketball.position.x));
+              basketball.position.z = Math.max(-courtHalfLength + ballRadius, Math.min(courtHalfLength - ballRadius, basketball.position.z));
             }
           }
         }
@@ -897,6 +901,11 @@ function animate() {
           basketballVelocity.z = 0;
           // Set X to rim's X so it falls in front of the basket
           basketball.position.x = rimCenter.x;
+          // Clamp to court boundaries after scoring
+          const courtHalfWidth = 15;
+          const courtHalfLength = 7.5;
+          basketball.position.x = Math.max(-courtHalfWidth + ballRadius, Math.min(courtHalfWidth - ballRadius, basketball.position.x));
+          basketball.position.z = Math.max(-courtHalfLength + ballRadius, Math.min(courtHalfLength - ballRadius, basketball.position.z));
         }
       });
 
