@@ -894,6 +894,19 @@ function animate() {
       }
       // Update previous position for next frame
       prevBallPos = basketball.position.clone();
+
+      // --- Ball rotation during movement ---
+      if (basketballVelocity.length() > 0.01) {
+        // Axis perpendicular to velocity and up (Y)
+        const velocityDir = basketballVelocity.clone().normalize();
+        const up = new THREE.Vector3(0, 1, 0);
+        const axis = new THREE.Vector3().crossVectors(velocityDir, up).normalize();
+        // Rotation amount proportional to velocity
+        const rotationSpeed = basketballVelocity.length() * 0.07; // Tweak factor for realism
+        if (!isNaN(axis.x) && !isNaN(axis.y) && !isNaN(axis.z)) {
+          basketball.rotateOnAxis(axis, rotationSpeed);
+        }
+      }
     }
   }
 
