@@ -801,9 +801,9 @@ scoreboardElement.innerHTML = `
     <span style="color:#ff8c00">GUEST</span> <span id="guest-score-value">${guestScore}</span>
   </div>
   <div style="font-size: 16px; margin-top: 8px;">
-    <b>Attempts:</b> <span id="attempts-value">${totalShots}</span><br>
-    <b>Made:</b> <span id="made-value">${shotsMade}</span><br>
-    <b>Shooting %:</b> <span id="percent-value">0%</span>
+    <b>Total Shots:</b> <span id="attempts-value">${totalShots}</span><br>
+    <b>Successful Shots:</b> <span id="made-value">${shotsMade}</span><br>
+    <b>Accuracy:</b> <span id="percent-value">0%</span>
   </div>
 `;
 document.body.appendChild(scoreboardElement);
@@ -817,9 +817,9 @@ function updateScoreDisplay() {
       <span style="color:#ff8c00">GUEST</span> <span id="guest-score-value">${guestScore}</span>
     </div>
     <div style="font-size: 16px; margin-top: 8px;">
-      <b>Attempts:</b> <span id="attempts-value">${totalShots}</span><br>
-      <b>Made:</b> <span id="made-value">${shotsMade}</span><br>
-      <b>Shooting %:</b> <span id="percent-value">${percent}%</span>
+      <b>Total Shots:</b> <span id="attempts-value">${totalShots}</span><br>
+      <b>Successful Shots:</b> <span id="made-value">${shotsMade}</span><br>
+      <b>Accuracy:</b> <span id="percent-value">${percent}%</span>
     </div>
   `;
   // Update 3D scoreboard if available
