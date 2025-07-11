@@ -718,30 +718,38 @@ window.addEventListener('keydown', (e) => {
   }
   // Shoot with spacebar if not already in air
   if (e.code === 'Space' && !isBallInAir) {
-    // --- SPACEBAR SHOOT LOGIC ---
+    // --- PHYSICS-BASED SHOT ARC ---
     // 1. Find the nearest hoop
     const ballPos = basketball.position.clone();
     const distToLeft = ballPos.distanceTo(leftHoopPos);
     const distToRight = ballPos.distanceTo(rightHoopPos);
     const targetHoop = distToLeft < distToRight ? leftHoopPos : rightHoopPos;
-    // 2. Compute XZ direction from ball to hoop
-    const direction = targetHoop.clone().sub(ballPos);
-    const xzDir = new THREE.Vector3(direction.x, 0, direction.z).normalize();
-    // 3. Set Y to a value based on horizontal distance and shot power, with a cap
-    const horizontalDistance = Math.sqrt(direction.x * direction.x + direction.z * direction.z);
-    const arcRatio = 0.09;
-    const arcBoost = 1.3;
-    const minArcY = 1.0;
-    let verticalComponent = Math.max(minArcY, horizontalDistance * arcRatio + (shotPower / 100) * arcBoost);
-    // Cap vertical component to 80% of total intended velocity
-    const speed = 0.5 + 1.5 * (shotPower / 100); // Tweak as needed
-    const maxY = speed * 0.8;
-    if (verticalComponent > maxY) verticalComponent = maxY;
-    // 4. Compose velocity vector
-    const velocity = new THREE.Vector3(xzDir.x, verticalComponent, xzDir.z);
-    // 5. Set velocity magnitude based on shot power
-    basketballVelocity.copy(velocity.multiplyScalar(speed / velocity.length()));
-    // 6. Start flight simulation
+    // 2. Set apex height above rim
+    const rimY = targetHoop.y;
+    const apexY = Math.max(ballPos.y, rimY + 1.5); // 1.5 units above rim
+    // 3. Calculate time to apex and from apex to rim
+    const g = Math.abs(gravity.y); // positive gravity value
+    const dy1 = apexY - ballPos.y;
+    const dy2 = apexY - rimY;
+    // Time to rise to apex
+    const t1 = Math.sqrt(2 * dy1 / g);
+    // Time to fall from apex to rim
+    const t2 = Math.sqrt(2 * dy2 / g);
+    const totalTime = t1 + t2;
+    // 4. Initial vertical velocity to reach apex
+    const vy = g * t1;
+    // 5. Horizontal (XZ) velocity to reach hoop in totalTime
+    const dx = targetHoop.x - ballPos.x;
+    const dz = targetHoop.z - ballPos.z;
+    const vx = dx / totalTime;
+    const vz = dz / totalTime;
+    // 6. Combine into velocity vector
+    let velocity = new THREE.Vector3(vx, vy, vz);
+    // 7. Scale velocity by shot power (power 50 = normal, <50 = slower/higher arc, >50 = faster/lower arc)
+    const powerScale = 0.5 + shotPower / 100; // 0.5 (min) to 1.5 (max)
+    velocity.multiplyScalar(powerScale);
+    basketballVelocity.copy(velocity);
+    // 8. Start flight simulation
     isBallInAir = true;
     lastScoreHoop = null; // Reset score detection
   }
@@ -778,6 +786,7 @@ function animate() {
 
   // Basketball movement speed (units per frame)
   const moveSpeed = 0.2;
+  const ballRadius = 0.8; // Make ballRadius available everywhere in animate
   if (basketball) {
     if (!isBallInAir) {
       let moved = false;
@@ -799,11 +808,12 @@ function animate() {
         basketball.position.z += moveSpeed;
         moved = true;
       }
-      // Optionally, clamp basketball position to stay within court bounds
+      // Clamp basketball position to stay within court bounds (entire ball)
       const courtHalfWidth = 15;
       const courtHalfLength = 7.5;
-      basketball.position.x = Math.max(-courtHalfWidth, Math.min(courtHalfWidth, basketball.position.x));
-      basketball.position.z = Math.max(-courtHalfLength, Math.min(courtHalfLength, basketball.position.z));
+      basketball.position.x = Math.max(-courtHalfWidth + ballRadius, Math.min(courtHalfWidth - ballRadius, basketball.position.x));
+      basketball.position.z = Math.max(-courtHalfLength + ballRadius, Math.min(courtHalfLength - ballRadius, basketball.position.z));
+      prevBallPos = basketball.position.clone();
     } else {
       // Store previous position before moving
       if (!prevBallPos) prevBallPos = basketball.position.clone();
@@ -812,21 +822,24 @@ function animate() {
       basketballVelocity.add(gravity);
 
       // --- IMPROVED COLLISION DETECTION ---
-      const ballRadius = 0.8;
       [
         {rim: leftRim, backboard: leftBackboard, rimCenter: leftHoopPos, isLeft: true, hoopName: 'left'},
         {rim: rightRim, backboard: rightBackboard, rimCenter: rightHoopPos, isLeft: false, hoopName: 'right'}
       ].forEach(({rim, backboard, rimCenter, isLeft, hoopName}) => {
         if (!rim || !backboard) return;
-        // --- Rim collision (solid tube) ---
+        // --- Rim collision (solid tube, but allow scoring) ---
         const rimY = rimCenter.y;
         const rimXZ = new THREE.Vector2(rimCenter.x, rimCenter.z);
         const ballXZ = new THREE.Vector2(basketball.position.x, basketball.position.z);
         const distXZ = rimXZ.distanceTo(ballXZ);
         const rimRadius = 0.9;
         const rimTube = 0.1; // Torus tube radius
+        const scoringMargin = 0.18; // Allow ball to pass through if inside this margin
+        // Only check if ball is near rim height
         if (Math.abs(basketball.position.y - rimY) < ballRadius + rimTube) {
-          if (distXZ > rimRadius - (rimTube + ballRadius) && distXZ < rimRadius + (rimTube + ballRadius)) {
+          // Only apply rim collision if ball is outside scoring zone or moving upward
+          const inScoringZone = distXZ < rimRadius - scoringMargin && basketballVelocity.y < 0;
+          if (!inScoringZone && distXZ > rimRadius - (rimTube + ballRadius) && distXZ < rimRadius + (rimTube + ballRadius)) {
             const fromRim = ballXZ.clone().sub(rimXZ).normalize();
             const vXZ = new THREE.Vector2(basketballVelocity.x, basketballVelocity.z);
             const dot = vXZ.dot(fromRim);
@@ -854,11 +867,19 @@ function animate() {
             if (prevX - ballRadius > backboardX && currX - ballRadius <= backboardX && basketballVelocity.x < 0) {
               basketballVelocity.x *= -backboardRestitution;
               basketball.position.x = backboardX - ballRadius - 0.01;
+              // Clamp so the entire ball never goes behind the backboard
+              if (basketball.position.x < backboardX - ballRadius) {
+                basketball.position.x = backboardX - ballRadius;
+              }
             }
           } else {
             if (prevX + ballRadius < backboardX && currX + ballRadius >= backboardX && basketballVelocity.x > 0) {
               basketballVelocity.x *= -backboardRestitution;
               basketball.position.x = backboardX + ballRadius + 0.01;
+              // Clamp so the entire ball never goes behind the backboard
+              if (basketball.position.x > backboardX + ballRadius) {
+                basketball.position.x = backboardX + ballRadius;
+              }
             }
           }
         }
@@ -871,6 +892,11 @@ function animate() {
           score++;
           updateScoreDisplay();
           lastScoreHoop = hoopName;
+          // Make the ball fall straight down after scoring
+          basketballVelocity.x = 0;
+          basketballVelocity.z = 0;
+          // Set X to rim's X so it falls in front of the basket
+          basketball.position.x = rimCenter.x;
         }
       });
 
