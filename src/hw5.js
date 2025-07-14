@@ -605,6 +605,11 @@ const rightHoopPos = new THREE.Vector3(14.1, 6.8, 0);
 // Track previous basketball position for robust collision
 let prevBallPos = null;
 
+// Ball trail effect variables
+let ballTrailPositions = [];
+let ballTrailLine = null;
+const maxTrailPoints = 20;
+
 // --- Camera Presets ---
 const cameraPresets = [
     { // Default wide view
@@ -930,7 +935,6 @@ function showConfettiBurst(rimCenter) {
 // --- Sound Effects ---
 const shotSound = new Audio('sounds/swish.mp3'); // for swish
 const bounceSound = new Audio('sounds/bounce.wav'); // for rim
-const backboardSound = new Audio('sounds/backboard.mp3'); // for backboard
 const scoreSound = new Audio('sounds/score.wav'); // for score
 const whooshSound = new Audio('sounds/whoosh.wav'); // for throw
 function playSound(sound) {
@@ -978,6 +982,14 @@ function animate() {
       basketball.position.x = Math.max(-courtHalfWidth + ballRadius, Math.min(courtHalfWidth - ballRadius, basketball.position.x));
       basketball.position.z = Math.max(-courtHalfLength + ballRadius, Math.min(courtHalfLength - ballRadius, basketball.position.z));
       prevBallPos = basketball.position.clone();
+      // Clear trail when ball is not in air
+      ballTrailPositions = [];
+      if (ballTrailLine) {
+        scene.remove(ballTrailLine);
+        ballTrailLine.geometry.dispose();
+        ballTrailLine.material.dispose();
+        ballTrailLine = null;
+      }
     } else {
       // Store previous position before moving
       if (!prevBallPos) prevBallPos = basketball.position.clone();
@@ -1158,6 +1170,30 @@ function animate() {
         if (!isNaN(axis.x) && !isNaN(axis.y) && !isNaN(axis.z)) {
           basketball.rotateOnAxis(axis, rotationSpeed);
         }
+      }
+
+      // Ball trail effect: record position and update trail
+      ballTrailPositions.push(basketball.position.clone());
+      if (ballTrailPositions.length > maxTrailPoints) ballTrailPositions.shift();
+      // Remove old trail line
+      if (ballTrailLine) {
+        scene.remove(ballTrailLine);
+        ballTrailLine.geometry.dispose();
+        ballTrailLine.material.dispose();
+        ballTrailLine = null;
+      }
+      if (ballTrailPositions.length > 1) {
+        const trailGeometry = new THREE.BufferGeometry().setFromPoints(ballTrailPositions);
+        // Fading color: start with orange, fade to transparent
+        const colors = [];
+        for (let i = 0; i < ballTrailPositions.length; i++) {
+          const t = i / (ballTrailPositions.length - 1);
+          colors.push(1, 0.55, 0, 1 - t); // RGBA: orange, fade alpha
+        }
+        trailGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 4));
+        const trailMaterial = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true });
+        ballTrailLine = new THREE.Line(trailGeometry, trailMaterial);
+        scene.add(ballTrailLine);
       }
     }
   }
