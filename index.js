@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 const app = express()
 const port = 8000
 
-app.use("/src", express.static(__dirname + "/src"));
+app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '/index.html'));
