@@ -593,6 +593,11 @@ let shotsMade = 0;
 let homeScore = 0;
 let guestScore = 0;
 
+// Combo system variables
+let comboCount = 0;
+let lastComboHoop = null;
+let comboBonusGiven = false;
+
 // Hoop positions (rim center)
 const leftHoopPos = new THREE.Vector3(-14.1, 6.8, 0);
 const rightHoopPos = new THREE.Vector3(14.1, 6.8, 0);
@@ -1057,7 +1062,7 @@ function animate() {
             lastScoreHoop !== hoopName &&
             oldPos.y > rimY + ballRadius && basketball.position.y <= rimY + ballRadius &&
             distXZ < rimRadius - rimTube * 0.7) {
-          playSound(shotSound);
+          setTimeout(() => playSound(shotSound), 300); // Delay swish sound by 300ms
           swishPlayedThisShot = true;
         }
         // --- Score detection: ball passes through hoop from above ---
@@ -1068,15 +1073,34 @@ function animate() {
         ) {
           score++;
           shotsMade++;
-          // Team scoring: left hoop = home, right hoop = guest
+          // Always add 2 points for a made shot
           if (isLeft) {
             homeScore += 2;
           } else {
             guestScore += 2;
           }
+          // Combo system: check if same hoop as last combo
+          if (lastComboHoop === hoopName) {
+            comboCount++;
+          } else {
+            comboCount = 1;
+            lastComboHoop = hoopName;
+            comboBonusGiven = false;
+          }
+          // Award 1 bonus point if 3+ consecutive makes on same hoop, only once per streak
+          if (comboCount === 3 && !comboBonusGiven) {
+            if (isLeft) {
+              homeScore += 1;
+            } else {
+              guestScore += 1;
+            }
+            comboBonusGiven = true;
+            showShotMessage('COMBO! +1 Bonus', '#ffd700');
+          } else {
+            showShotMessage('SHOT MADE!', '#00ff00');
+          }
           updateScoreDisplay();
           lastScoreHoop = hoopName;
-          showShotMessage('SHOT MADE!', '#00ff00');
           showConfettiBurst(rimCenter);
           // Swish sound now plays earlier, so don't play it here
           // Play score sound 1 second after swish
@@ -1115,6 +1139,9 @@ function animate() {
         // If the last shot was not made, show 'MISSED SHOT' message
         if (totalShots > 0 && shotsMade < totalShots && lastScoreHoop === null) {
           showShotMessage('MISSED SHOT', '#ff4444');
+          comboCount = 0; // Reset combo on miss
+          lastComboHoop = null;
+          comboBonusGiven = false;
         }
       }
       // Update previous position for next frame
