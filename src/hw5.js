@@ -723,6 +723,7 @@ window.addEventListener('keydown', (e) => {
     touchedRim = false;
     touchedBackboard = false;
     swishPlayedThisShot = false; // Reset swish flag for new shot
+    playSound(whooshSound); // Play whoosh sound when ball is thrown
     // --- PHYSICS-BASED SHOT ARC ---
     // 1. Find the nearest hoop
     const ballPos = basketball.position.clone();
@@ -925,6 +926,8 @@ function showConfettiBurst(rimCenter) {
 const shotSound = new Audio('sounds/swish.mp3'); // for swish
 const bounceSound = new Audio('sounds/bounce.wav'); // for rim
 const backboardSound = new Audio('sounds/backboard.mp3'); // for backboard
+const scoreSound = new Audio('sounds/score.wav'); // for score
+const whooshSound = new Audio('sounds/whoosh.wav'); // for throw
 function playSound(sound) {
   sound.currentTime = 0;
   sound.play();
@@ -1076,6 +1079,8 @@ function animate() {
           showShotMessage('SHOT MADE!', '#00ff00');
           showConfettiBurst(rimCenter);
           // Swish sound now plays earlier, so don't play it here
+          // Play score sound 1 second after swish
+          setTimeout(() => playSound(scoreSound), 1000);
           // Make the ball fall straight down after scoring
           basketballVelocity.x = 0;
           basketballVelocity.z = 0;
