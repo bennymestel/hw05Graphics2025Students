@@ -720,6 +720,9 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'Space' && !isBallInAir) {
     totalShots++;
     updateScoreDisplay();
+    touchedRim = false;
+    touchedBackboard = false;
+    swishPlayedThisShot = false; // Reset swish flag for new shot
     // --- PHYSICS-BASED SHOT ARC ---
     // 1. Find the nearest hoop
     const ballPos = basketball.position.clone();
@@ -918,6 +921,20 @@ function showConfettiBurst(rimCenter) {
   animateConfetti();
 }
 
+// --- Sound Effects ---
+const shotSound = new Audio('sounds/swish.mp3'); // for swish
+const bounceSound = new Audio('sounds/bounce.wav'); // for rim
+const backboardSound = new Audio('sounds/backboard.mp3'); // for backboard
+function playSound(sound) {
+  sound.currentTime = 0;
+  sound.play();
+}
+
+// Track rim/backboard contact for swish logic
+let touchedRim = false;
+let touchedBackboard = false;
+let swishPlayedThisShot = false; // New flag to prevent double swish
+
 function animate() {
   requestAnimationFrame(animate);
   controls.enabled = isOrbitEnabled;
@@ -988,6 +1005,8 @@ function animate() {
             const pushOut = rimRadius + (rimTube + ballRadius) + 0.01;
             basketball.position.x = rimCenter.x + fromRim.x * pushOut;
             basketball.position.z = rimCenter.z + fromRim.y * pushOut;
+            playSound(bounceSound);
+            touchedRim = true;
           }
         }
         // --- Backboard collision (robust plane crossing, matches visible mesh) ---
@@ -1013,6 +1032,8 @@ function animate() {
               const courtHalfLength = 7.5;
               basketball.position.x = Math.max(-courtHalfWidth + ballRadius, Math.min(courtHalfWidth - ballRadius, basketball.position.x));
               basketball.position.z = Math.max(-courtHalfLength + ballRadius, Math.min(courtHalfLength - ballRadius, basketball.position.z));
+              // playSound(backboardSound); // Disabled for now
+              touchedBackboard = true;
             }
           } else {
             if (prevX + ballRadius < backboardX && currX + ballRadius >= backboardX && basketballVelocity.x > 0) {
@@ -1023,8 +1044,18 @@ function animate() {
               const courtHalfLength = 7.5;
               basketball.position.x = Math.max(-courtHalfWidth + ballRadius, Math.min(courtHalfWidth - ballRadius, basketball.position.x));
               basketball.position.z = Math.max(-courtHalfLength + ballRadius, Math.min(courtHalfLength - ballRadius, basketball.position.z));
+              // playSound(backboardSound); // Disabled for now
+              touchedBackboard = true;
             }
           }
+        }
+        // --- Swish sound trigger: play when ball is just above rim, only once per shot ---
+        if (!swishPlayedThisShot &&
+            lastScoreHoop !== hoopName &&
+            oldPos.y > rimY + ballRadius && basketball.position.y <= rimY + ballRadius &&
+            distXZ < rimRadius - rimTube * 0.7) {
+          playSound(shotSound);
+          swishPlayedThisShot = true;
         }
         // --- Score detection: ball passes through hoop from above ---
         if (
@@ -1044,6 +1075,7 @@ function animate() {
           lastScoreHoop = hoopName;
           showShotMessage('SHOT MADE!', '#00ff00');
           showConfettiBurst(rimCenter);
+          // Swish sound now plays earlier, so don't play it here
           // Make the ball fall straight down after scoring
           basketballVelocity.x = 0;
           basketballVelocity.z = 0;
@@ -1065,6 +1097,7 @@ function animate() {
           // Dampen horizontal velocity slightly on ground bounce
           basketballVelocity.x *= 0.8;
           basketballVelocity.z *= 0.8;
+          playSound(bounceSound); // Play bounce sound on ground bounce
         } else {
           basketballVelocity.set(0, 0, 0);
           isBallInAir = false;
